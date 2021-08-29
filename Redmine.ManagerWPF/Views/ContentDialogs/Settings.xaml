@@ -1,0 +1,98 @@
+﻿<ui:ContentDialog
+    x:Class="Redmine.ManagerWPF.Desktop.Views.ContentDialogs.Settings"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:Redmine.ManagerWPF.Desktop.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Redmine.ManagerWPF.Desktop.Views.ContentDialogs"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
+    Title="Ustawienia"
+    d:DesignHeight="500"
+    d:DesignWidth="800"
+    PrimaryButtonCommand="{Binding SaveSettingsCommand}"
+    PrimaryButtonText="Zapisz"
+    SecondaryButtonClick="ContentDialog_SecondaryButtonClick"
+    SecondaryButtonText="Anuluj"
+    mc:Ignorable="d">
+    <ui:ContentDialog.DataContext>
+        <vm:SettingsViewModel />
+    </ui:ContentDialog.DataContext>
+    <ui:ContentDialog.Resources>
+        <ResourceDictionary>
+            <conv:BoolToColorConverter x:Key="BoolToColorConverter" />
+        </ResourceDictionary>
+    </ui:ContentDialog.Resources>
+    <Grid MinWidth="450">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock
+            Grid.Row="0"
+            Grid.Column="0"
+            Text="Nazwa serwera:" />
+        <TextBox
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="0,0,5,0"
+            Text="{Binding CurrentSettings.ServerName}" />
+        <TextBlock
+            Grid.Row="0"
+            Grid.Column="1"
+            Margin="5,0,0,0"
+            Text="Nazwa bazy danych:" />
+        <TextBox
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="5,0,0,0"
+            Text="{Binding CurrentSettings.DatabaseName}" />
+        <Button
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Grid.Column="2"
+            Width="85"
+            MinHeight="30"
+            Margin="10,0,0,0"
+            VerticalAlignment="Bottom"
+            BorderBrush="DarkGray"
+            Command="{Binding ConnectionTestCommand}"
+            Foreground="{Binding Connected, Converter={StaticResource BoolToColorConverter}}">
+            <TextBlock
+                Background="{Binding Connected, Converter={StaticResource BoolToColorConverter}}"
+                FontSize="10"
+                Foreground="{Binding Connected, Converter={StaticResource BoolToColorConverter}}"
+                Text="{Binding ConnectionStatusText}"
+                TextAlignment="Center"
+                TextWrapping="Wrap" />
+        </Button>
+        <TextBlock
+            Grid.Row="2"
+            Grid.ColumnSpan="3"
+            Margin="0,10,0,0"
+            Text="ApiKey:" />
+        <TextBox
+            Grid.Row="3"
+            Grid.ColumnSpan="3"
+            Text="{Binding CurrentSettings.ApiKey}" />
+        <TextBlock
+            Grid.Row="4"
+            Grid.ColumnSpan="3"
+            Margin="0,10,0,0"
+            Text="Url:" />
+        <TextBox
+            Grid.Row="5"
+            Grid.ColumnSpan="3"
+            Text="{Binding CurrentSettings.Url}" />
+    </Grid>
+</ui:ContentDialog>

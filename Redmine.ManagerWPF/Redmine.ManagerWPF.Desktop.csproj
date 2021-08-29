@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="7.0.3" />
+    <PackageReference Include="Microsoft.Toolkit.Mvvm" Version="7.0.2" />
+    <PackageReference Include="ModernWpfUI" Version="0.9.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Redmine.ManagerWPF.Abstraction\Redmine.ManagerWPF.Abstraction.csproj" />
+    <ProjectReference Include="..\Redmine.ManagerWPF.Data\Redmine.ManagerWPF.Data.csproj" />
+    <ProjectReference Include="..\Redmine.ManagerWPF.Helpers\Redmine.ManagerWPF.Helpers.csproj" />
+    <ProjectReference Include="..\Redmine.ManagerWPF.Integration\Redmine.ManagerWPF.Integration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Views\UserControls\" />
+  </ItemGroup>
+
+</Project>
