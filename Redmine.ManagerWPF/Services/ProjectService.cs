@@ -31,34 +31,30 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return result;
         }
 
-        public async Task SynchronizeProjects()
+        public Task<Project> GetProjectAsync(int id)
         {
-            var redmineProjects = _projectService.GetProjects();
-            var redmineProjectsIds = redmineProjects.Select(x => x.Id);
+            return _context.Projects.Where(x => x.Id == id).FirstOrDefaultAsync();
+        }
 
-            var existingProjects = _context.Projects.Where(x => redmineProjectsIds.Contains(x.SourceId)).ToList();
-            var existingProjectsSourceId = existingProjects.Select(X => X.SourceId).ToList();
+        public Task SynchronizeProjects(Integration.Models.ProjectDto redmineProject)
+        {
+            var redmineProjectIds = redmineProject.Id;
 
-            var entities = _mapper.Map<IEnumerable<Project>>(redmineProjects);
+            var existingProject = _context.Projects.FirstOrDefault(x => x.SourceId == redmineProjectIds);
 
-            var entitiesToAdd = new List<Project>();
-            var entitiesToUpdate = new List<Project>();
-            foreach (var item in entities)
+            if (existingProject == null)
             {
-                if (existingProjectsSourceId.Contains(item.SourceId))
-                {
-                    entitiesToUpdate.Add(item);
-                }
-                else
-                {
-                    item.Status = Data.Enums.StatusType.New.ToString();
-                    entitiesToAdd.Add(item);
-                }
+                var entity = _mapper.Map<Project>(redmineProject);
+                entity.Status = Data.Enums.StatusType.New.ToString();
+                _context.Add(entity);
+            }
+            else
+            {
+                _mapper.Map(redmineProject, existingProject);
+                _context.Update(existingProject);
             }
 
-            _context.UpdateRange(entitiesToUpdate);
-            _context.AddRange(entitiesToAdd);
-            await _context.SaveChangesAsync();
+            return Task.FromResult(_context.SaveChanges());
         }
     }
 }

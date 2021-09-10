@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Redmine.ManagerWPF.Desktop.Messages;
-using Redmine.ManagerWPF.Desktop.Models.Issues;
+using Redmine.ManagerWPF.Desktop.Models.Comments;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using System.Diagnostics;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
-    public class IssueFormViewModel : ObservableRecipient
+    public class CommentFormViewModel : ObservableRecipient
     {
         private TreeModel _node;
 
@@ -22,23 +22,23 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             set { SetProperty(ref _node, value); }
         }
 
-        private FormModel _issueFormModel;
+        private FormModel _commentFormModel;
 
-        public FormModel IssueFormModel
+        public FormModel CommentFormModel
         {
-            get { return _issueFormModel; }
-            set { SetProperty(ref _issueFormModel, value); }
+            get { return _commentFormModel; }
+            set { SetProperty(ref _commentFormModel, value); }
         }
 
-        private readonly IssueService _issueService;
+        private readonly CommentService _commentService;
         private readonly IMapper _mapper;
 
         public IRelayCommand OpenBrowserCommand { get; }
 
-        public IssueFormViewModel()
+        public CommentFormViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
-            _issueService = Ioc.Default.GetRequiredService<IssueService>();
+            _commentService = Ioc.Default.GetRequiredService<CommentService>();
 
             WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
             {
@@ -50,15 +50,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public void ReceiveNode(TreeModel message)
         {
-            if (message.Type == nameof(Data.Models.Issue))
+            if(message.Type == nameof(Data.Models.Comment))
             {
                 Task.Run(async () =>
                 {
                     Node = message;
-                    var issue = await _issueService.GetIssueAsync(Node.Id);
-                    if (issue != null)
+                    var comment = await _commentService.GetCommentByIdAsync(Node.Id);
+                    if (comment != null)
                     {
-                        IssueFormModel = _mapper.Map<FormModel>(issue);
+                        CommentFormModel = _mapper.Map<FormModel>(comment);
                     }
                 });
             }
@@ -68,7 +68,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             var psi = new ProcessStartInfo
             {
-                FileName = IssueFormModel.Link,
+                FileName = CommentFormModel.Link,
                 UseShellExecute = true
             };
             Process.Start(psi);

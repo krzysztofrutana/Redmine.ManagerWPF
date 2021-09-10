@@ -57,6 +57,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public IRelayCommand SaveSettingsCommand { get; }
         public IRelayCommand ConnectionTestCommand { get; }
+        public IRelayCommand CreateDatabaseCommand { get; }
 
         private readonly Context _context;
 
@@ -65,10 +66,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _context = Ioc.Default.GetRequiredService<Context>();
 
             CurrentSettings = new SettingsModel();
-            ConnectionStatusText = "Test połączenia";
             LoadCurrentSettings();
             SaveSettingsCommand = new RelayCommand(SaveSettings);
             ConnectionTestCommand = new RelayCommand(ConnectionTest);
+            CreateDatabaseCommand = new RelayCommand(CreateDatabase);
         }
 
         private void ConnectionTest()
@@ -85,6 +86,30 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 Connected = false;
             }
         }
+        private void CreateDatabase()
+        {
+            SaveSettings();
+            if (!_context.Database.CanConnect())
+            {
+                try
+                {
+                    _context.Database.EnsureCreated();
+                    ConnectionStatusText = "Połączono";
+                    Connected = true;
+                }
+                catch (Exception ex)
+                {
+                    ConnectionStatusText = "Błąd, tworzenia bazy";
+                    Connected = false;
+                }
+            }
+            else
+            {
+                ConnectionStatusText = "Baza danych już istnieje";
+                Connected = true;
+            }
+        }
+
 
         private void LoadCurrentSettings()
         {

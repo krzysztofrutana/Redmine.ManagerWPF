@@ -7,6 +7,7 @@ using Redmine.Net.Api.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Integration.Services
 {
@@ -19,7 +20,7 @@ namespace Redmine.ManagerWPF.Integration.Services
             _mapper = mapper;
         }
 
-        public IEnumerable<ProjectDto> GetProjects()
+        public Task<List<ProjectDto>> GetProjects()
         {
             string url = SettingsHelper.GetUrl();
             string apiKey = SettingsHelper.GetApiKey();
@@ -32,7 +33,7 @@ namespace Redmine.ManagerWPF.Integration.Services
             var parameters = new NameValueCollection { { RedmineKeys.INCLUDE, RedmineKeys.ISSUE_CATEGORIES } };
             var result = manager.GetObjects<Project>(parameters);
 
-            return _mapper.Map<IEnumerable<ProjectDto>>(result);
+            return Task.FromResult(_mapper.Map<List<ProjectDto>>(result));
         }
     }
 }

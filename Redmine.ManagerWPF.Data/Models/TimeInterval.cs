@@ -9,5 +9,6 @@ namespace Redmine.ManagerWPF.Data.Models
         public DateTime TimeIntervalEnd { get; set; }
         public Issue Issue { get; set; }
         public Comment Comment { get; set; }
+        public string Note { get; set; }
     }
 }

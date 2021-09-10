@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Integration.Services
 {
@@ -19,10 +20,8 @@ namespace Redmine.ManagerWPF.Integration.Services
             _mapper = mapper;
         }
 
-        public IEnumerable<IssueDto> GetIssues()
+        public Task<List<IssueDto>> GetIssues()
         {
-            List<IssueDto> issues = new List<IssueDto>();
-
             string host = SettingsHelper.GetUrl();
             string apiKey = SettingsHelper.GetApiKey();
 
@@ -33,19 +32,25 @@ namespace Redmine.ManagerWPF.Integration.Services
 
             var parameters = new NameValueCollection { };
             var result = manager.GetObjects<Redmine.Net.Api.Types.Issue>(parameters);
-            var allIssuesIds = result.Select(x => x.Id);
 
-            foreach (var id in allIssuesIds)
-            {
-                var parametersForIssue = new NameValueCollection { { RedmineKeys.INCLUDE, RedmineKeys.JOURNALS }, { RedmineKeys.INCLUDE, RedmineKeys.RELATIONS } };
-                var issue = manager.GetObject<Redmine.Net.Api.Types.Issue>(id.ToString(), parametersForIssue);
+            var issues = _mapper.Map<List<IssueDto>>(result);
 
-                var issueDto = _mapper.Map<IssueDto>(issue);
+            return Task.FromResult(issues);
+        }
 
-                issues.Add(issueDto);
-            }
+        public Task<IssueDto> GetIssueJournals(IssueDto issue)
+        {
+            string host = SettingsHelper.GetUrl();
+            string apiKey = SettingsHelper.GetApiKey();
 
-            return issues;
+            var manager = new RedmineManager(host, apiKey);
+
+            var parametersForIssue = new NameValueCollection { { RedmineKeys.INCLUDE, RedmineKeys.JOURNALS }, { RedmineKeys.INCLUDE, RedmineKeys.RELATIONS } };
+            var redmineIssue = manager.GetObject<Redmine.Net.Api.Types.Issue>(issue.Id.ToString(), parametersForIssue);
+
+            issue.Comments = _mapper.Map<IEnumerable<JournalDto>>(redmineIssue.Journals);
+
+            return Task.FromResult(issue);
         }
     }
 }

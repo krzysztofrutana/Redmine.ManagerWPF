@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Desktop.Views.ContentDialogs;
+using Redmine.ManagerWPF.Desktop.Views.UserControls;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -25,6 +26,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             set
             {
                 SetProperty(ref _selectedProject, value);
+
+                if (value != null)
+                {
+                    WeakReferenceMessenger.Default.Send(new ProjectChangeMessage(value));
+                }
+
+                ViewProjectDetails = value != null;
+
             }
         }
 
@@ -38,9 +47,45 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 SetProperty(ref _selectedNode, value);
                 if (value != null)
                 {
+                    if (value.Type == nameof(Data.Models.Issue))
+                    {
+                        ViewIssueDetails = true;
+                        ViewCommentDetails = false;
+                    }
+
+                    if (value.Type == nameof(Data.Models.Comment))
+                    {
+                        ViewIssueDetails = false;
+                        ViewCommentDetails = true;
+                    }
+
                     WeakReferenceMessenger.Default.Send(new NodeChangeMessage(value));
                 }
             }
+        }
+
+        private bool _viewProjectDetails;
+
+        public bool ViewProjectDetails
+        {
+            get { return _viewProjectDetails; }
+            set { SetProperty(ref _viewProjectDetails, value); }
+        }
+
+        private bool _viewIssueDetails;
+
+        public bool ViewIssueDetails
+        {
+            get { return _viewIssueDetails; }
+            set { SetProperty(ref _viewIssueDetails, value); }
+        }
+
+        private bool _viewCommentDetails;
+
+        public bool ViewCommentDetails
+        {
+            get { return _viewCommentDetails; }
+            set { SetProperty(ref _viewCommentDetails, value); }
         }
 
         private readonly IMapper _mapper;
@@ -48,8 +93,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly ProjectService _projectService;
         private readonly IssueService _issueService;
 
-        public IAsyncRelayCommand SynchronizeProjectsCommand { get; }
-        public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
+        public IRelayCommand SynchronizeProjectsCommand { get; }
+        public IRelayCommand SynchronizeIssuesCommand { get; }
         public IAsyncRelayCommand LoadProjectsAsyncCommand { get; }
         public IAsyncRelayCommand LoadIssuesForProjectAsyncCommand { get; }
         public IRelayCommand OpenSettingsDialogCommand { get; }
@@ -60,8 +105,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
 
-            SynchronizeProjectsCommand = new AsyncRelayCommand(SynchronizeProjects);
-            SynchronizeIssuesCommand = new AsyncRelayCommand(SynchronizeIssues);
+            SynchronizeProjectsCommand = new RelayCommand(ShowSynchronizeProjectDialog);
+            SynchronizeIssuesCommand = new RelayCommand(SynchronizeIssuesDialog);
             LoadProjectsAsyncCommand = new AsyncRelayCommand(LoadProjects);
             LoadIssuesForProjectAsyncCommand = new AsyncRelayCommand(LoadIssuesForProject);
             OpenSettingsDialogCommand = new RelayCommand(OpenSettingsDialog);
@@ -69,6 +114,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private async Task LoadProjects()
         {
+            Projects.Clear();
             var result = await _projectService.GetProjectsAsync();
             foreach (var item in _mapper.Map<IEnumerable<Models.Projects.ListItemModel>>(result))
             {
@@ -76,21 +122,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        private async Task SynchronizeProjects()
+        private void ShowSynchronizeProjectDialog()
         {
-            await _projectService.SynchronizeProjects();
-
-            await LoadProjects();
+            var dialog = new SynchronizeProjects();
+            dialog.ShowAsync();
         }
 
-        private async Task SynchronizeIssues()
+        private void SynchronizeIssuesDialog()
         {
-            await _issueService.SynchronizeIssues();
+            var dialog = new SynchronizeIssues();
+            dialog.ShowAsync();
         }
 
         private async Task LoadIssuesForProject()
         {
-            if (SelectedProject.Id > 0)
+            if (SelectedProject != null && SelectedProject.Id > 0)
             {
                 Issues.Clear();
                 var result = await _issueService.GetIssuesByProjectIdAsync(SelectedProject.Id);
@@ -104,7 +150,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private void OpenSettingsDialog()
         {
             var dialog = new Settings();
-            var asyncoperation = dialog.ShowAsync();
+            dialog.ShowAsync();
         }
     }
 }

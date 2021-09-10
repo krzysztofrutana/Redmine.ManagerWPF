@@ -14,22 +14,16 @@ namespace Redmine.ManagerWPF.Desktop.Services
     public class IssueService : IService
     {
         private readonly Context _context;
-        private readonly Integration.Services.IssueService _integrationIssueService;
         private readonly IMapper _mapper;
-        private readonly ProjectService _projectService;
         private readonly CommentService _commentService;
 
         public IssueService(
             Context context,
-            Integration.Services.IssueService integrationIssueService,
             IMapper mapper,
-            ProjectService projectService,
             CommentService commentService)
         {
             _context = context;
-            _integrationIssueService = integrationIssueService;
             _mapper = mapper;
-            _projectService = projectService;
             _commentService = commentService;
         }
 
@@ -53,7 +47,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
         private async Task<List<Issue>> GetCommentForIssues(List<Issue> issues)
         {
             var issuesIds = issues.Select(x => x.Id).ToList();
-            var comments = await _commentService.GetCommentByIssuesIds(issuesIds);
+            var comments = await _commentService.GetCommentByIssuesIdsAsync(issuesIds);
 
             foreach (var item in issues)
             {
@@ -66,6 +60,11 @@ namespace Redmine.ManagerWPF.Desktop.Services
         public Task<Issue> GetIssueAsync(int id)
         {
             return _context.Issues.Where(X => X.Id == id).SingleOrDefaultAsync();
+        }
+
+        public Task<List<Issue>> GetAllIssueAsync()
+        {
+            return _context.Issues.ToListAsync();
         }
 
         private async Task CreateTree(List<Issue> parents, List<Issue> issues)
@@ -85,73 +84,76 @@ namespace Redmine.ManagerWPF.Desktop.Services
             }
         }
 
-        public async Task SynchronizeIssues()
+        public async Task SynchronizeIssues(Integration.Models.IssueDto redmineIssue)
         {
-            var allIssues = _integrationIssueService.GetIssues();
-
-            if (allIssues.Any())
+            try
             {
-                var allExistingIssues = _context.Issues.ToList();
+                var existingIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.Id);
 
-                var resultSourceIds = allIssues.Select(x => x.Id).ToList();
+                Issue addedOrUpdatedIssue = null;
 
-                var sourceIdsToUpdate = allExistingIssues.Where(x => resultSourceIds.Contains(x.SourceId)).ToList();
+                if (existingIssue == null)
+                {
+                    var entity = _mapper.Map<Issue>(redmineIssue);
 
-                var allProjects = await _projectService.GetProjectsAsync();
+                    var project = _context.Projects.FirstOrDefault(x => x.SourceId == redmineIssue.ProjectId);
+                    if(project != null)
+                    {
+                        entity.Project = project;
 
-                // first update parrent
-                var parentResult = allIssues.Where(x => x.ParentIssueId == null).ToList();
+                        if (_context.Issues.Any(x => x.SourceId == redmineIssue.ParentIssueId))
+                        {
+                            var parentIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.ParentIssueId);
+                            if (parentIssue != null)
+                            {
+                                entity.MainTask = parentIssue;
+                            }
+                        }
+                        entity.Status = Data.Enums.StatusType.New.ToString();
+                        _context.Add(entity);
+                        _context.SaveChanges();
+                        addedOrUpdatedIssue = entity;
+                    } 
+                }
+                else
+                {
+                    var project = _context.Projects.FirstOrDefault(x => x.SourceId == redmineIssue.ProjectId);
+                    if (project != null)
+                    {
+                        existingIssue.Project = project;
 
-                await AddIssue(allIssues, allProjects, parentResult);
+                        _mapper.Map(redmineIssue, existingIssue);
+                        _context.Update(existingIssue);
+                        _context.SaveChanges();
+                        addedOrUpdatedIssue = existingIssue;
+                    }
+                }
+
+                if (addedOrUpdatedIssue != null)
+                {
+                    foreach (var commentDto in redmineIssue.Comments)
+                    {
+                        await _commentService.SynchronizeCommentAsync(commentDto, addedOrUpdatedIssue);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
             }
         }
 
-        private async Task AddIssue(IEnumerable<Integration.Models.IssueDto> allIssues, List<Project> allProjects, List<Integration.Models.IssueDto> parentIssues)
+        public Task UpdateTreeStructure(Integration.Models.IssueDto redmineIssue, Issue issue)
         {
-            if (allIssues.Count() > 0)
+            var parentIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.ParentIssueId);
+            if(parentIssue != null)
             {
-                var addedSourceIds = new List<int>();
-                foreach (var item in parentIssues)
-                {
-                    var itemToAdd = _mapper.Map<Issue>(item);
-                    var project = allProjects.Where(x => x.SourceId == item.ProjectId).FirstOrDefault();
-                    if (project != null)
-                    {
-                        itemToAdd.Project = project;
-                    }
-
-                    if (item.ParentIssueId != null)
-                    {
-                        var parent = _context.Issues.Where(x => x.SourceId == item.ParentIssueId).FirstOrDefault();
-                        if (parent != null)
-                        {
-                            itemToAdd.MainTask = parent;
-                        }
-                    }
-
-                    _context.Add(itemToAdd);
-                    await _context.SaveChangesAsync();
-
-                    foreach (var commentDto in item.Comments)
-                    {
-                        var comment = _mapper.Map<Comment>(commentDto);
-                        comment.Issue = itemToAdd;
-                        _context.Add(comment);
-                    }
-
-                    await _context.SaveChangesAsync();
-
-                    addedSourceIds.Add(item.Id);
-                }
-                var issuesWithoutParent = allIssues.Where(x => !addedSourceIds.Contains(x.Id)).ToList();
-                var newParent = issuesWithoutParent.Where(x => x.ParentIssueId.HasValue && addedSourceIds.Contains(x.ParentIssueId.Value)).ToList();
-
-                await AddIssue(issuesWithoutParent, allProjects, newParent);
+                issue.MainTask = parentIssue;
+                _context.Update(issue);
             }
-            else
-            {
-                return;
-            }
+
+            return Task.FromResult(_context.SaveChanges());
         }
     }
 }

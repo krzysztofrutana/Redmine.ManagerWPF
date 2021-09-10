@@ -9,7 +9,7 @@
     xmlns:ui="http://schemas.modernwpf.com/2019"
     xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
     Title="Ustawienia"
-    d:DesignHeight="500"
+    d:DesignHeight="550"
     d:DesignWidth="800"
     PrimaryButtonCommand="{Binding SaveSettingsCommand}"
     PrimaryButtonText="Zapisz"
@@ -39,15 +39,17 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <TextBlock
+            VerticalAlignment="Bottom"
             Grid.Row="0"
             Grid.Column="0"
             Text="Nazwa serwera:" />
         <TextBox
             Grid.Row="1"
             Grid.Column="0"
-            Margin="0,0,5,0"
+            Margin="0,0,5,14"
             Text="{Binding CurrentSettings.ServerName}" />
         <TextBlock
+            VerticalAlignment="Bottom"
             Grid.Row="0"
             Grid.Column="1"
             Margin="5,0,0,0"
@@ -55,27 +57,59 @@
         <TextBox
             Grid.Row="1"
             Grid.Column="1"
-            Margin="5,0,0,0"
+            Margin="5,0,0,14"
             Text="{Binding CurrentSettings.DatabaseName}" />
-        <Button
+        <Grid
+            VerticalAlignment="Bottom"
             Grid.Row="0"
             Grid.RowSpan="2"
-            Grid.Column="2"
+            Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button
+                Grid.Row="0"
+                Grid.Column="0"
             Width="85"
             MinHeight="30"
             Margin="10,0,0,0"
-            VerticalAlignment="Bottom"
+            VerticalAlignment="Center"
             BorderBrush="DarkGray"
-            Command="{Binding ConnectionTestCommand}"
-            Foreground="{Binding Connected, Converter={StaticResource BoolToColorConverter}}">
+            Command="{Binding CreateDatabaseCommand}" >
+                <TextBlock Text="Utwórz bazę danych" TextWrapping="Wrap" FontSize="11" TextAlignment="Center"/>
+            </Button>
+            <Button
+                Grid.Row="0"
+            Grid.Column="1"
+            Width="70"
+            MinHeight="30"
+            Margin="10,0,0,0"
+            VerticalAlignment="Center"
+            BorderBrush="DarkGray"
+            Command="{Binding ConnectionTestCommand}">
+                <TextBlock
+                FontSize="10"
+                Text="Test połączenia"
+                TextAlignment="Center"
+                TextWrapping="Wrap" />
+            </Button>
             <TextBlock
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
                 Background="{Binding Connected, Converter={StaticResource BoolToColorConverter}}"
                 FontSize="10"
                 Foreground="{Binding Connected, Converter={StaticResource BoolToColorConverter}}"
                 Text="{Binding ConnectionStatusText}"
                 TextAlignment="Center"
                 TextWrapping="Wrap" />
-        </Button>
+        </Grid>
+        
         <TextBlock
             Grid.Row="2"
             Grid.ColumnSpan="3"
