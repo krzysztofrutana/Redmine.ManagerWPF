@@ -154,7 +154,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                     SetStatus(SynchronizeIssueStatusType.AllDone);
                 }
-                catch (Exception ex)
+                catch
                 {
 
                     throw;

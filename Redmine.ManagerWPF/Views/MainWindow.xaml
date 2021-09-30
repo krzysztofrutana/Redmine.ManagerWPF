@@ -59,6 +59,7 @@
                 Margin="10,10,10,0"
                 MinWidth="200"
                 Grid.Column="1"
+                MinHeight="70"
                 VerticalAlignment="Center"
                 SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
                 ItemsSource="{Binding Projects}">

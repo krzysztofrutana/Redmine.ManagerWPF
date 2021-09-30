@@ -21,9 +21,16 @@ namespace Redmine.ManagerWPF.Desktop.Services
             _mapper = mapper;
         }
 
-        public Task<Comment> GetCommentByIdAsync(int id)
+        public Task<Comment> GetCommentAsync(int id)
         {
             return _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public Task<Comment> GetCommentWithTimeIntervalAsync(int id)
+        {
+            return _context.Comments
+                .Include(x => x.TimeForComment)
+                .SingleOrDefaultAsync(x => x.Id == id);
         }
 
         public Task<List<Comment>> GetCommentByIssueIdAsync(long issueId)
@@ -74,7 +81,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 }
                 return Task.FromResult(_context.SaveChanges());
             }
-            catch (Exception ex)
+            catch
             {
 
                 throw;

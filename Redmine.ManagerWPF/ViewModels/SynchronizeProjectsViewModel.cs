@@ -102,7 +102,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     CancelButtonText = String.Empty;
                     PrimaryButtonText = "Kliknij by zamknąć";
                 }
-                catch (Exception ex)
+                catch 
                 {
 
                     throw;

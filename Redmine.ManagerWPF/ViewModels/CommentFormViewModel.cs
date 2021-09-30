@@ -55,7 +55,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 Task.Run(async () =>
                 {
                     Node = message;
-                    var comment = await _commentService.GetCommentByIdAsync(Node.Id);
+                    var comment = await _commentService.GetCommentAsync(Node.Id);
                     if (comment != null)
                     {
                         CommentFormModel = _mapper.Map<FormModel>(comment);

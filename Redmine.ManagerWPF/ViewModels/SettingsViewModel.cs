@@ -97,7 +97,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     ConnectionStatusText = "Połączono";
                     Connected = true;
                 }
-                catch (Exception ex)
+                catch
                 {
                     ConnectionStatusText = "Błąd, tworzenia bazy";
                     Connected = false;
