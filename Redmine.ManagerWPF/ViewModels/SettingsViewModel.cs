@@ -93,6 +93,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 try
                 {
+                    _context.Database.Migrate();
                     _context.Database.EnsureCreated();
                     ConnectionStatusText = "Połączono";
                     Connected = true;

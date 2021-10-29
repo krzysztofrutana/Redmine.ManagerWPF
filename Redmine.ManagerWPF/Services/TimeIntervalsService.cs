@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.Services
@@ -26,21 +26,21 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task Create(TreeModel treeModel, DateTime start, DateTime end)
         {
-            if(treeModel.Type == nameof(Issue))
+            if (treeModel.Type == nameof(Issue))
             {
                 var issue = await _issueService.GetIssueWithTimeIntervalAsync(treeModel.Id);
-                if(issue != null)
+                if (issue != null)
                 {
                     var newTimeInterval = new TimeInterval();
                     newTimeInterval.TimeIntervalStart = start;
                     newTimeInterval.TimeIntervalEnd = end;
                     issue.TimesForIssue.Add(newTimeInterval);
                     _context.Update(issue);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
 
             }
-            else if(treeModel.Type == nameof(Comment))
+            else if (treeModel.Type == nameof(Comment))
             {
                 var comment = await _commentService.GetCommentWithTimeIntervalAsync(treeModel.Id);
                 if (comment != null)
@@ -50,7 +50,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     newTimeInterval.TimeIntervalEnd = end;
                     comment.TimeForComment.Add(newTimeInterval);
                     _context.Update(comment);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
             }
         }
@@ -63,6 +63,56 @@ namespace Redmine.ManagerWPF.Desktop.Services
         public Task<List<TimeInterval>> GetTimeIntervalsForComment(int commentId)
         {
             return _context.TimeIntervals.Where(x => x.Comment.Id == commentId).ToListAsync();
+        }
+
+        public Task<TimeInterval> GetTimeInterval(long id)
+        {
+            return _context.TimeIntervals.Where(x => x.Id == id).SingleOrDefaultAsync();
+        }
+
+        public async Task Delete(TimeInterval timeInterval)
+        {
+            _context.Remove(timeInterval);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task Update(TimeInterval timeInterval)
+        {
+            _context.Update(timeInterval);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<TimeInterval> CreateEmpty(int objectId, ObjectType type)
+        {
+            if (type == ObjectType.Issue)
+            {
+                var issue = await _issueService.GetIssueAsync(objectId);
+                if (issue != null)
+                {
+                    var timeInterval = new TimeInterval();
+                    timeInterval.Issue = issue;
+                    _context.TimeIntervals.Add(timeInterval);
+                    await _context.SaveChangesAsync();
+
+                    return timeInterval;
+                }
+            }
+
+            if (type == ObjectType.Comment)
+            {
+                var comment = await _commentService.GetCommentAsync(objectId);
+                if (comment != null)
+                {
+                    var timeInterval = new TimeInterval();
+                    timeInterval.Comment = comment;
+                    _context.TimeIntervals.Add(timeInterval);
+                    await _context.SaveChangesAsync();
+
+                    return timeInterval;
+                }
+            }
+
+            return null;
         }
     }
 }

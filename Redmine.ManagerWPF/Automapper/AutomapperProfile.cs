@@ -15,6 +15,7 @@ namespace Redmine.ManagerWPF.Desktop.Automapper
             Projects();
             Issues();
             Comment();
+            TimeInterval();
         }
 
         private void Projects()
@@ -62,6 +63,14 @@ namespace Redmine.ManagerWPF.Desktop.Automapper
                .ForMember(x => x.Type, m => m.MapFrom<Resolvers.TreeModelTypeResolver>());
 
             CreateMap<Comment, Models.Comments.FormModel>();
+        }
+
+        private void TimeInterval()
+        {
+            CreateMap<TimeInterval, Models.TimeIntervals.ListItemModel>()
+                .ForMember(x => x.StartDate, m => m.MapFrom(s => s.TimeIntervalStart))
+                .ForMember(x => x.EndDate, m => m.MapFrom(s => s.TimeIntervalEnd))
+                .ForMember(x => x.CountedTime, m => m.Ignore());
         }
     }
 }

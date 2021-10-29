@@ -51,12 +51,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     {
                         ViewIssueDetails = true;
                         ViewCommentDetails = false;
+                        ViewTimeIntervalList = true;
                     }
 
                     if (value.Type == nameof(Data.Models.Comment))
                     {
                         ViewIssueDetails = false;
                         ViewCommentDetails = true;
+                        ViewTimeIntervalList = true;
                     }
 
                     WeakReferenceMessenger.Default.Send(new NodeChangeMessage(value));
@@ -86,6 +88,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             get { return _viewCommentDetails; }
             set { SetProperty(ref _viewCommentDetails, value); }
+        }
+
+        private bool _viewTimeIntervalList;
+
+        public bool ViewTimeIntervalList
+        {
+            get { return _viewTimeIntervalList; }
+            set { SetProperty(ref _viewTimeIntervalList, value); }
         }
 
         private readonly IMapper _mapper;

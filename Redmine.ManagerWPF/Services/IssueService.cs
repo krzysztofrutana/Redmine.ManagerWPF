@@ -6,7 +6,6 @@ using Redmine.ManagerWPF.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.Services
@@ -105,7 +104,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     var entity = _mapper.Map<Issue>(redmineIssue);
 
                     var project = _context.Projects.FirstOrDefault(x => x.SourceId == redmineIssue.ProjectId);
-                    if(project != null)
+                    if (project != null)
                     {
                         entity.Project = project;
 
@@ -119,9 +118,9 @@ namespace Redmine.ManagerWPF.Desktop.Services
                         }
                         entity.Status = Data.Enums.StatusType.New.ToString();
                         _context.Add(entity);
-                        _context.SaveChanges();
+                        await _context.SaveChangesAsync();
                         addedOrUpdatedIssue = entity;
-                    } 
+                    }
                 }
                 else
                 {
@@ -132,7 +131,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
                         _mapper.Map(redmineIssue, existingIssue);
                         _context.Update(existingIssue);
-                        _context.SaveChanges();
+                        await _context.SaveChangesAsync();
                         addedOrUpdatedIssue = existingIssue;
                     }
                 }
@@ -152,16 +151,16 @@ namespace Redmine.ManagerWPF.Desktop.Services
             }
         }
 
-        public Task UpdateTreeStructure(Integration.Models.IssueDto redmineIssue, Issue issue)
+        public async Task UpdateTreeStructure(Integration.Models.IssueDto redmineIssue, Issue issue)
         {
             var parentIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.ParentIssueId);
-            if(parentIssue != null)
+            if (parentIssue != null)
             {
                 issue.MainTask = parentIssue;
                 _context.Update(issue);
             }
 
-            return Task.FromResult(_context.SaveChanges());
+            await _context.SaveChangesAsync();
         }
     }
 }

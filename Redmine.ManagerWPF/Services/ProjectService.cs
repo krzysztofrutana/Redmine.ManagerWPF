@@ -6,7 +6,6 @@ using Redmine.ManagerWPF.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.Services
@@ -36,7 +35,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return _context.Projects.Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
-        public Task SynchronizeProjects(Integration.Models.ProjectDto redmineProject)
+        public async Task SynchronizeProjects(Integration.Models.ProjectDto redmineProject)
         {
             var redmineProjectIds = redmineProject.Id;
 
@@ -54,7 +53,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 _context.Update(existingProject);
             }
 
-            return Task.FromResult(_context.SaveChanges());
+            await _context.SaveChangesAsync();
         }
     }
 }

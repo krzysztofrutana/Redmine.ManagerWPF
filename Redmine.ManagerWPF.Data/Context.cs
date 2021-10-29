@@ -17,6 +17,7 @@ namespace Redmine.ManagerWPF.Data
             {
                 if (Database.CanConnect())
                 {
+                    Database.Migrate();
                     Database.EnsureCreated();
                 }
             }

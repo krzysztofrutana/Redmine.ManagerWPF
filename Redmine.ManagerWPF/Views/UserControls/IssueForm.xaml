@@ -10,7 +10,7 @@
     <UserControl.DataContext>
         <vm:IssueFormViewModel x:Name="ViewModel" />
     </UserControl.DataContext>
-    <Grid>
+    <Grid MaxHeight="400">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />

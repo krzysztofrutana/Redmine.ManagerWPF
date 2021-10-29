@@ -11,7 +11,6 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
 {
     public static class TimeIntervalHelper
     {
-        private static TimeIntervalsService _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
         public static Stopwatch Timer { get; set; }
         public static TreeModel TreeNode {  get; set; }
         public static DateTime StartDateTime { get; set; }
@@ -39,11 +38,11 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
             return Task.CompletedTask;
         }
 
-        public static Task Stop(TreeModel treeModel)
+        public static Task<DateTime> Stop(TreeModel treeModel)
         {
             if (TreeNode == null)
             {
-                return Task.CompletedTask;
+                throw new Exception("Aktualnie czas nie jest liczony");
             }
 
             if (treeModel == null)
@@ -51,12 +50,12 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
 
             if (TreeNode != null && TreeNode.Type != treeModel.Type)
             {
-                return Task.CompletedTask;
+                throw new Exception("Aktualnie czas jest liczony dla obiektu innego typu");
             }
 
             if (TreeNode != null && TreeNode.Type == treeModel.Type && TreeNode.Id != treeModel.Id)
             {
-                return Task.CompletedTask;
+                throw new Exception("Czas liczony jest dla innego obiektu.");
             }
 
             Timer.Stop();
@@ -67,7 +66,7 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
             TreeNode = null;
 
 
-            return _timeIntervalsService.Create(treeModel, StartDateTime, endTime);
+            return Task.FromResult(endTime);
 
         }
 
