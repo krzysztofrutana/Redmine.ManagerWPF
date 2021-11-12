@@ -52,15 +52,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             if (message.Type == nameof(Data.Models.Issue))
             {
-                Task.Run(async () =>
+                Node = message;
+                var issue = _issueService.GetIssue(Node.Id);
+                if (issue != null)
                 {
-                    Node = message;
-                    var issue = await _issueService.GetIssueAsync(Node.Id);
-                    if (issue != null)
-                    {
-                        IssueFormModel = _mapper.Map<FormModel>(issue);
-                    }
-                });
+                    IssueFormModel = _mapper.Map<FormModel>(issue);
+                }
             }
         }
 

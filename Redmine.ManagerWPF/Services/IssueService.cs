@@ -61,6 +61,11 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return _context.Issues.Where(X => X.Id == id).SingleOrDefaultAsync();
         }
 
+        public Issue GetIssue(int id)
+        {
+            return _context.Issues.Where(X => X.Id == id).SingleOrDefault();
+        }
+
         public Task<Issue> GetIssueWithTimeIntervalAsync(int id)
         {
             return _context.Issues
@@ -146,7 +151,6 @@ namespace Redmine.ManagerWPF.Desktop.Services
             }
             catch
             {
-
                 throw;
             }
         }

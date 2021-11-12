@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Desktop.Views.ContentDialogs;
-using Redmine.ManagerWPF.Desktop.Views.UserControls;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -33,7 +32,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 }
 
                 ViewProjectDetails = value != null;
-
             }
         }
 
@@ -108,6 +106,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IAsyncRelayCommand LoadProjectsAsyncCommand { get; }
         public IAsyncRelayCommand LoadIssuesForProjectAsyncCommand { get; }
         public IRelayCommand OpenSettingsDialogCommand { get; }
+        public IRelayCommand OpenDailyRaportDialogCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -120,6 +119,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             LoadProjectsAsyncCommand = new AsyncRelayCommand(LoadProjects);
             LoadIssuesForProjectAsyncCommand = new AsyncRelayCommand(LoadIssuesForProject);
             OpenSettingsDialogCommand = new RelayCommand(OpenSettingsDialog);
+            OpenDailyRaportDialogCommand = new RelayCommand(OpenDailyRaportDialog);
         }
 
         private async Task LoadProjects()
@@ -160,6 +160,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private void OpenSettingsDialog()
         {
             var dialog = new Settings();
+            dialog.ShowAsync();
+        }
+
+        private void OpenDailyRaportDialog()
+        {
+            var dialog = new DailyRaport();
             dialog.ShowAsync();
         }
     }

@@ -4,9 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Desktop.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -92,7 +90,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
         public IRelayCommand CancelCommand { get; }
 
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         public SynchronizeIssuesViewModel()
         {
@@ -107,7 +105,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public Task SynchronizeIssues()
         {
-            var token = cancellationTokenSource.Token;
+            var token = _cancellationTokenSource.Token;
             return Task.Run(async () =>
             {
                 try
@@ -144,10 +142,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     foreach (var issue in allIssues)
                     {
                         var redmineIssue = redmineIssues.FirstOrDefault(x => x.Id == issue.SourceId);
-                        if(redmineIssue != null && redmineIssue.ParentIssueId != null)
+                        if (redmineIssue != null && redmineIssue.ParentIssueId != null)
                         {
                             await _issueService.UpdateTreeStructure(redmineIssue, issue);
-                        } 
+                        }
                         Value++;
                         ProgressBarValue = step * Value;
                     }
@@ -156,16 +154,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 }
                 catch
                 {
-
                     throw;
                 }
-
             }, token);
         }
 
         public void Cancel()
         {
-            cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
         }
 
         private void SetStatus(SynchronizeIssueStatusType status)
@@ -177,16 +173,19 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     ShowDownloadIssues = true;
                     ShowTreeUpdateText = false;
                     break;
+
                 case SynchronizeIssueStatusType.SynchronizeIssues:
                     ShowProgressText = true;
                     ShowDownloadIssues = false;
                     ShowTreeUpdateText = false;
                     break;
+
                 case SynchronizeIssueStatusType.BuildTree:
                     ShowProgressText = false;
                     ShowDownloadIssues = false;
                     ShowTreeUpdateText = true;
                     break;
+
                 case SynchronizeIssueStatusType.AllDone:
                     ShowOk = true;
                     CancelButtonText = String.Empty;

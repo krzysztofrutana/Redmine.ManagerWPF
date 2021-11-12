@@ -86,6 +86,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 Connected = false;
             }
         }
+
         private void CreateDatabase()
         {
             SaveSettings();
@@ -110,7 +111,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 Connected = true;
             }
         }
-
 
         private void LoadCurrentSettings()
         {

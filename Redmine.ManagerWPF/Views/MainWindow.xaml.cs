@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +26,18 @@ namespace Redmine.ManagerWPF.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var _timeIntervalService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
+
+            if (_timeIntervalService.CheckIfAnyStartedTimeIntervalExist())
+            {
+                var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+                _messageBoxService.ShowWarningInfoBox("Proszę zakończyć wszystkie zadania!", "Uwaga");
+                e.Cancel = true;
+            }
         }
     }
 }

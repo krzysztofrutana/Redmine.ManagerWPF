@@ -28,12 +28,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\ContentDialogs\DailyRaport.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\ContentDialogs\SynchronizeIssues.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Views\ContentDialogs\DailyRaport.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Views\ContentDialogs\SynchronizeIssues.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>

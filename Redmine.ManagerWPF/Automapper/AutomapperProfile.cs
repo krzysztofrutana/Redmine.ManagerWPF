@@ -70,7 +70,8 @@ namespace Redmine.ManagerWPF.Desktop.Automapper
             CreateMap<TimeInterval, Models.TimeIntervals.ListItemModel>()
                 .ForMember(x => x.StartDate, m => m.MapFrom(s => s.TimeIntervalStart))
                 .ForMember(x => x.EndDate, m => m.MapFrom(s => s.TimeIntervalEnd))
-                .ForMember(x => x.CountedTime, m => m.Ignore());
+                .ForMember(x => x.CountedTime, m => m.MapFrom<Resolvers.CountetTimeResolver>())
+                .ForMember(x => x.IsStarted, m => m.MapFrom(s => s.IsStarted));
         }
     }
 }

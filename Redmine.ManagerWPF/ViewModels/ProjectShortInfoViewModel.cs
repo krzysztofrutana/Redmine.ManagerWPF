@@ -3,14 +3,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Projects;
 using Redmine.ManagerWPF.Desktop.Services;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels

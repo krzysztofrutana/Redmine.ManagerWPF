@@ -50,7 +50,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public void ReceiveNode(TreeModel message)
         {
-            if(message.Type == nameof(Data.Models.Comment))
+            if (message.Type == nameof(Data.Models.Comment))
             {
                 Task.Run(async () =>
                 {

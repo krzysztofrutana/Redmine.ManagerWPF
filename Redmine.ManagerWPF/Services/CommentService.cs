@@ -82,10 +82,8 @@ namespace Redmine.ManagerWPF.Desktop.Services
             }
             catch
             {
-
                 throw;
             }
-
         }
     }
 }

@@ -5,10 +5,12 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
+using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.TimeIntervals;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -24,8 +26,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private Timer CurrentNodeTimer { get; set; }
 
-        private readonly object _timeIntervalsForNodeLock;
-
         private TreeModel _node;
 
 
@@ -35,18 +35,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             set { SetProperty(ref _node, value); }
         }
 
-        private ObservableCollection<ListItemModel> _timeIntervalsForNode = new ObservableCollection<ListItemModel>();
-        public ObservableCollection<ListItemModel> TimeIntervalsForNode
-        {
-            get => _timeIntervalsForNode;
-            private set
-            {
-                _timeIntervalsForNode = value;
-                BindingOperations.EnableCollectionSynchronization(_timeIntervalsForNode, _timeIntervalsForNodeLock);
-            }
-        }
+        public ObservableCollection<ListItemModel> TimeIntervalsForNode { get; set; } = new AsyncObservableCollection<ListItemModel>();
+
         private readonly IMapper _mapper;
         private readonly TimeIntervalsService _timeIntervalsService;
+        private readonly IMessageBoxService _messageBoxService;
 
         public IAsyncRelayCommand AddTimeIntervalAsyncCommand { get; }
         public IAsyncRelayCommand RemoveTimeIntervalAsyncCommand { get; }
@@ -57,6 +50,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public TimeIntervalsViewModel()
         {
             _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
+            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
 
             AddTimeIntervalAsyncCommand = new AsyncRelayCommand(AddTimeInterval);
@@ -65,53 +59,52 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             EndTimeIntervalAsyncCommand = new AsyncRelayCommand<ListItemModel>(EndTimeInterval);
 
 
-            WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, async (recipient, mmessage) =>
             {
-                ReceiveNode(m.Value);
+                await ReceiveNode(mmessage.Value);
             });
         }
 
-        public void ReceiveNode(TreeModel message)
+        public async Task ReceiveNode(TreeModel message)
         {
-
-            Task.Run(async () =>
+            try
             {
-                try
+                Node = message;
+                TimeIntervalsForNode.Clear();
+
+                List<ListItemModel> times = new List<ListItemModel>();
+                if (Node.Type == nameof(Issue))
                 {
-                    Node = message;
-
-                    List<ListItemModel> times = new List<ListItemModel>();
-                    if (Node.Type == nameof(Issue))
-                    {
-                        var timeIntervalsForIssue = await _timeIntervalsService.GetTimeIntervalsForIssue(Node.Id);
-                        times = _mapper.Map<List<ListItemModel>>(timeIntervalsForIssue);
-                    }
-
-                    if (Node.Type == nameof(Comment))
-                    {
-                        var timeIntervalsForComment = await _timeIntervalsService.GetTimeIntervalsForComment(Node.Id);
-                        times = _mapper.Map<List<ListItemModel>>(timeIntervalsForComment);
-                    }
-
-                    if (times.Any())
-                    {
-                        TimeIntervalsForNode.Clear();
-                        foreach (var item in times)
-                        {
-                            TimeIntervalsForNode.Add(item);
-                        }
-                    }
-
-                    return new List<ListItemModel>();
+                    var timeIntervalsForIssue = await _timeIntervalsService.GetTimeIntervalsForIssueAsync(Node.Id);
+                    times = _mapper.Map<List<ListItemModel>>(timeIntervalsForIssue);
                 }
-                catch (Exception ex)
+
+                if (Node.Type == nameof(Comment))
                 {
-
-                    throw;
+                    var timeIntervalsForComment = await _timeIntervalsService.GetTimeIntervalsForCommentAsync(Node.Id);
+                    times = _mapper.Map<List<ListItemModel>>(timeIntervalsForComment);
                 }
-            });
 
+                if (times.Any())
+                {
+                    
+                    foreach (var item in times)
+                    {
+                        TimeIntervalsForNode.Add(item);
+                    }
 
+                    var startedTimeInterval = TimeIntervalsForNode.FirstOrDefault(x => x.IsStarted);
+                    if (startedTimeInterval != null)
+                    {
+                        UpdateCountedTime(startedTimeInterval);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         public async Task AddTimeInterval()
@@ -121,19 +114,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 TimeInterval timeInterval = null;
                 if (Node.Type == nameof(ObjectType.Issue))
                 {
-                    timeInterval = await _timeIntervalsService.CreateEmpty(Node.Id, ObjectType.Issue);
+                    timeInterval = await _timeIntervalsService.CreateEmptyAsync(Node.Id, ObjectType.Issue);
 
                 }
 
                 if (Node.Type == nameof(ObjectType.Comment))
                 {
-                    timeInterval = await _timeIntervalsService.CreateEmpty(Node.Id, ObjectType.Comment);
+                    timeInterval = await _timeIntervalsService.CreateEmptyAsync(Node.Id, ObjectType.Comment);
 
                 }
 
                 if (timeInterval != null)
                 {
-                    TimeIntervalsForNode.Add(_mapper.Map<ListItemModel>(timeInterval));
+                    var timeIntervalModel = _mapper.Map<ListItemModel>(timeInterval);
+                    TimeIntervalsForNode.Add(timeIntervalModel);
                 }
             }
             catch (Exception ex)
@@ -147,10 +141,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             try
             {
-                TimeInterval timeInterval = await _timeIntervalsService.GetTimeInterval(item.Id);
+                if(CurrentNodeTimer != null)
+                {
+                    CurrentNodeTimer.Dispose();
+                }
+
+                TimeInterval timeInterval = await _timeIntervalsService.GetTimeIntervalAsync(item.Id);
                 if (timeInterval != null)
                 {
-                    await _timeIntervalsService.Delete(timeInterval);
+                    await _timeIntervalsService.DeleteAsync(timeInterval);
                 }
 
                 var deletedTimeInterval = TimeIntervalsForNode.SingleOrDefault(x => x.Id == item.Id);
@@ -167,15 +166,24 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             try
             {
-                item.StartDate = DateTime.Now;
-                TimeInterval timeInterval = await _timeIntervalsService.GetTimeInterval(item.Id);
-                if (timeInterval != null)
+                if(await _timeIntervalsService.CheckIfAnyStartedTimeIntervalExistAsync())
                 {
-                    timeInterval.TimeIntervalStart = item.StartDate;
-                    await _timeIntervalsService.Update(timeInterval);
+                    _messageBoxService.ShowWarningInfoBox("Istnieje inne niezakończone zadanie!", "Uwaga");
+                    return;
                 }
 
-                UpdateCountedTime(item);
+                var listItem = TimeIntervalsForNode.FirstOrDefault(x => x.Id == item.Id);
+                TimeInterval timeInterval = await _timeIntervalsService.GetTimeIntervalAsync(item.Id);
+                if (timeInterval != null)
+                {
+                    listItem.StartDate = DateTime.Now;
+                    listItem.IsStarted = true;
+
+                    timeInterval.TimeIntervalStart = item.StartDate;
+                    await _timeIntervalsService.UpdateAsync(timeInterval);
+                }
+
+                UpdateCountedTime(listItem);
             }
             catch (Exception ex)
             {
@@ -188,17 +196,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             try
             {
-                item.EndDate = DateTime.Now;
-                TimeInterval timeInterval = await _timeIntervalsService.GetTimeInterval(item.Id);
+                var listItem = TimeIntervalsForNode.FirstOrDefault(x => x.Id == item.Id);
+                TimeInterval timeInterval = await _timeIntervalsService.GetTimeIntervalAsync(item.Id);
                 if (timeInterval != null)
                 {
+                    listItem.EndDate = DateTime.Now;
+                    listItem.IsStarted = false;
+
                     timeInterval.TimeIntervalEnd = item.EndDate;
-                    await _timeIntervalsService.Update(timeInterval);
+                    timeInterval.IsStarted = false;
+                    await _timeIntervalsService.UpdateAsync(timeInterval);
                 }
 
                 CurrentNodeTimer.Dispose();
             }
-            catch (Exception ex)
+            catch
             {
 
                 throw;
@@ -207,15 +219,22 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private void UpdateCountedTime(ListItemModel item)
         {
+            
             CurrentNodeTimer = new Timer(SetCountedTime, item, 0, 1000);
         }
 
         private void SetCountedTime(object? state)
         {
-            if (TimeIntervalsForNode.Any(x => x.IsStarted))
+            if (state is ListItemModel timeInterval)
             {
-                var startedTimeInterval = TimeIntervalsForNode.FirstOrDefault(x => x.IsStarted);
-                startedTimeInterval.CountedTime = (DateTime.Now - startedTimeInterval.StartDate).ToString();
+                if (timeInterval.IsStarted)
+                {
+                    if(timeInterval.StartDate.HasValue)
+                    {
+                        var totalTime = (DateTime.Now - timeInterval.StartDate.Value);
+                        timeInterval.CountedTime = $"{totalTime.Hours}:{totalTime.Minutes}:{totalTime.Seconds}";
+                    }
+                }
             }
         }
     }

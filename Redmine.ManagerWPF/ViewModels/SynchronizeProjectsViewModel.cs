@@ -3,8 +3,6 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using Redmine.ManagerWPF.Desktop.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -102,12 +100,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     CancelButtonText = String.Empty;
                     PrimaryButtonText = "Kliknij by zamknąć";
                 }
-                catch 
+                catch
                 {
-
                     throw;
                 }
-
             }, token);
         }
 

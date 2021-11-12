@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Redmine.ManagerWPF.Desktop.Extensions;
+using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -23,6 +25,7 @@ namespace Redmine.ManagerWPF
                .RegisterDbContext()
                .RegisterAutomapper()
                .RegisterDataServices()
+               .RegisterMessageBoxService()
                .BuildServiceProvider());
         }
     }

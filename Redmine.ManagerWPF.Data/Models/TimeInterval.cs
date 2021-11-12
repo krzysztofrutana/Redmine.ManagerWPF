@@ -18,6 +18,17 @@ namespace Redmine.ManagerWPF.Data.Models
             {
                 return TimeIntervalStart.HasValue && !TimeIntervalEnd.HasValue;
             }
-            set { } }
+            set { } 
+        }
+
+        [NotMapped]
+        public bool IsEnd
+        {
+            get
+            {
+                return TimeIntervalStart.HasValue && TimeIntervalEnd.HasValue;
+            }
+            set { }
+        }
     }
 }
