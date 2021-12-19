@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
 using System.Linq;
 using System.Threading;
@@ -87,15 +88,17 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             set { SetProperty(ref _cancelButtonText, value); }
         }
 
+        private readonly IMessageBoxService _messageBoxService;
+
         public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
         public IRelayCommand CancelCommand { get; }
-
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         public SynchronizeIssuesViewModel()
         {
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _integrationIssueService = Ioc.Default.GetRequiredService<Integration.Services.IssueService>();
+            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+
 
             CancelButtonText = "Anuluj";
 
@@ -103,65 +106,63 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             CancelCommand = new RelayCommand(Cancel);
         }
 
-        public Task SynchronizeIssues()
+        public async Task SynchronizeIssues(CancellationToken token)
         {
-            var token = _cancellationTokenSource.Token;
-            return Task.Run(async () =>
+            try
             {
-                try
+                SetStatus(SynchronizeIssueStatusType.DownloadIssues);
+                var redmineIssues = await _integrationIssueService.GetIssues();
+                TotalIssuesCount = redmineIssues.Count;
+                Value = 0;
+                ProgressBarValue = 0;
+                var step = 100 / TotalIssuesCount;
+                foreach (var redmineIssue in redmineIssues)
                 {
-                    SetStatus(SynchronizeIssueStatusType.DownloadIssues);
-                    var redmineIssues = await _integrationIssueService.GetIssues();
-                    TotalIssuesCount = redmineIssues.Count;
-                    Value = 0;
-                    ProgressBarValue = 0;
-                    var step = 100 / TotalIssuesCount;
-                    foreach (var redmineIssue in redmineIssues)
-                    {
-                        await _integrationIssueService.GetIssueJournals(redmineIssue);
-                        Value++;
-                        ProgressBarValue = step * Value;
-                    }
-
-                    SetStatus(SynchronizeIssueStatusType.SynchronizeIssues);
-                    Value = 0;
-                    ProgressBarValue = 0;
-                    foreach (var redmineProject in redmineIssues)
-                    {
-                        await _issueService.SynchronizeIssues(redmineProject);
-                        Value++;
-                        ProgressBarValue = step * Value;
-                    }
-
-                    SetStatus(SynchronizeIssueStatusType.BuildTree);
-                    var allIssues = await _issueService.GetAllIssueAsync();
-                    TotalIssuesCount = allIssues.Count;
-                    Value = 0;
-                    ProgressBarValue = 0;
-                    step = 100 / TotalIssuesCount;
-                    foreach (var issue in allIssues)
-                    {
-                        var redmineIssue = redmineIssues.FirstOrDefault(x => x.Id == issue.SourceId);
-                        if (redmineIssue != null && redmineIssue.ParentIssueId != null)
-                        {
-                            await _issueService.UpdateTreeStructure(redmineIssue, issue);
-                        }
-                        Value++;
-                        ProgressBarValue = step * Value;
-                    }
-
-                    SetStatus(SynchronizeIssueStatusType.AllDone);
+                    await _integrationIssueService.GetIssueJournals(redmineIssue);
+                    Value++;
+                    ProgressBarValue = step * Value;
                 }
-                catch
+
+                SetStatus(SynchronizeIssueStatusType.SynchronizeIssues);
+                Value = 0;
+                ProgressBarValue = 0;
+                foreach (var redmineProject in redmineIssues)
                 {
-                    throw;
+                    await _issueService.SynchronizeIssues(redmineProject);
+                    Value++;
+                    ProgressBarValue = step * Value;
                 }
-            }, token);
+
+                SetStatus(SynchronizeIssueStatusType.BuildTree);
+                var allIssues = await _issueService.GetAllIssueAsync();
+                TotalIssuesCount = allIssues.Count;
+                Value = 0;
+                ProgressBarValue = 0;
+                step = 100 / TotalIssuesCount;
+                foreach (var issue in allIssues)
+                {
+                    var redmineIssue = redmineIssues.FirstOrDefault(x => x.Id == issue.SourceId);
+                    if (redmineIssue != null && redmineIssue.ParentIssueId != null)
+                    {
+                        await _issueService.UpdateTreeStructure(redmineIssue, issue);
+                    }
+                    Value++;
+                    ProgressBarValue = step * Value;
+                }
+
+                SetStatus(SynchronizeIssueStatusType.AllDone);
+            }
+            catch (Exception ex)
+            {
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji zadań");
+
+            }
+
         }
 
         public void Cancel()
         {
-            _cancellationTokenSource.Cancel();
+            SynchronizeIssuesCommand.Cancel();
         }
 
         private void SetStatus(SynchronizeIssueStatusType status)

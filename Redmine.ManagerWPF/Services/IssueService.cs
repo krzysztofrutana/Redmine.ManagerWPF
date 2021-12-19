@@ -28,17 +28,13 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task<List<Issue>> GetIssuesByProjectIdAsync(long projectId)
         {
-            var result = _context.Issues.Include(x => x.Issues).AsQueryable();
-
-            result = result.Where(x => x.Project.Id == projectId);
-
-            var issues = await result.ToListAsync();
+            var issues = await _context.Issues.Include(x => x.Issues).Where(x => x.Project.Id == projectId).ToListAsync();
 
             issues = await GetCommentForIssues(issues);
 
             var mainIssues = issues.Where(x => x.MainTask == null).OrderBy(x => x.Name).ToList();
 
-            await CreateTree(mainIssues, issues);
+            CreateTree(mainIssues, issues);
 
             return mainIssues;
         }
@@ -69,9 +65,9 @@ namespace Redmine.ManagerWPF.Desktop.Services
         public Task<Issue> GetIssueWithTimeIntervalAsync(int id)
         {
             return _context.Issues
-                .Include(x => x.TimesForIssue)
-                .Where(X => X.Id == id)
-                .SingleOrDefaultAsync();
+            .Include(x => x.TimesForIssue)
+            .Where(X => X.Id == id)
+            .SingleOrDefaultAsync();
         }
 
         public Task<List<Issue>> GetAllIssueAsync()
@@ -79,7 +75,13 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return _context.Issues.ToListAsync();
         }
 
-        private async Task CreateTree(List<Issue> parents, List<Issue> issues)
+        public async Task Update(Issue entity)
+        {
+            _context.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        private void CreateTree(List<Issue> parents, List<Issue> issues)
         {
             if (parents.Count > 0)
             {
@@ -87,7 +89,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var currentParrent = issues.Where(x => x.MainTask != null && x.MainTask.Id == item.Id).OrderBy(x => x.Name).ToList();
                     item.Issues = currentParrent;
-                    await CreateTree(currentParrent, issues);
+                    CreateTree(currentParrent, issues);
                 }
             }
             else
@@ -100,7 +102,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
         {
             try
             {
-                var existingIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.Id);
+                var existingIssue = await _context.Issues.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.Id);
 
                 Issue addedOrUpdatedIssue = null;
 
@@ -108,28 +110,28 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var entity = _mapper.Map<Issue>(redmineIssue);
 
-                    var project = _context.Projects.FirstOrDefault(x => x.SourceId == redmineIssue.ProjectId);
+                    var project = await _context.Projects.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ProjectId);
                     if (project != null)
                     {
                         entity.Project = project;
 
-                        if (_context.Issues.Any(x => x.SourceId == redmineIssue.ParentIssueId))
+                        if (await _context.Issues.AnyAsync(x => x.SourceId == redmineIssue.ParentIssueId))
                         {
-                            var parentIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.ParentIssueId);
+                            var parentIssue = await _context.Issues.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ParentIssueId);
                             if (parentIssue != null)
                             {
                                 entity.MainTask = parentIssue;
                             }
                         }
                         entity.Status = Data.Enums.StatusType.New.ToString();
-                        _context.Add(entity);
+                        await _context.AddAsync(entity);
                         await _context.SaveChangesAsync();
                         addedOrUpdatedIssue = entity;
                     }
                 }
                 else
                 {
-                    var project = _context.Projects.FirstOrDefault(x => x.SourceId == redmineIssue.ProjectId);
+                    var project = await _context.Projects.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ProjectId);
                     if (project != null)
                     {
                         existingIssue.Project = project;
@@ -157,7 +159,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task UpdateTreeStructure(Integration.Models.IssueDto redmineIssue, Issue issue)
         {
-            var parentIssue = _context.Issues.FirstOrDefault(x => x.SourceId == redmineIssue.ParentIssueId);
+            var parentIssue = await _context.Issues.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ParentIssueId);
             if (parentIssue != null)
             {
                 issue.MainTask = parentIssue;

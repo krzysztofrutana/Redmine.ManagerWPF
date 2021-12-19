@@ -25,9 +25,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public Task<List<Project>> GetProjectsAsync()
         {
-            var result = _context.Projects.ToListAsync();
-
-            return result;
+            return _context.Projects.AsNoTracking().ToListAsync();
         }
 
         public Task<Project> GetProjectAsync(int id)
@@ -39,7 +37,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
         {
             var redmineProjectIds = redmineProject.Id;
 
-            var existingProject = _context.Projects.FirstOrDefault(x => x.SourceId == redmineProjectIds);
+            var existingProject = await _context.Projects.FirstOrDefaultAsync(x => x.SourceId == redmineProjectIds);
 
             if (existingProject == null)
             {

@@ -13,6 +13,6 @@ namespace Redmine.ManagerWPF.Data.Models
         public DateTime Date { get; set; }
         public ICollection<TimeInterval> TimeForComment { get; set; }
         public Issue Issue { get; set; }
-        public string Status { get; set; }
+        public bool Done { get; set; }
     }
 }

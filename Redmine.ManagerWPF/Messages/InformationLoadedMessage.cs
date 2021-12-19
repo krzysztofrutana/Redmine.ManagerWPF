@@ -3,9 +3,9 @@ using Redmine.ManagerWPF.Desktop.Models.Tree;
 
 namespace Redmine.ManagerWPF.Desktop.Messages
 {
-    public class InformationLoadedMessage : ValueChangedMessage<TreeModel>
+    public class NodeChangeMessage : ValueChangedMessage<TreeModel>
     {
-        public InformationLoadedMessage(TreeModel node) : base(node)
+        public NodeChangeMessage(TreeModel node) : base(node)
         {
         }
     }

@@ -41,21 +41,30 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
 
         private void RaiseCollectionChanged(object param)
         {
-            var e = (NotifyCollectionChangedEventArgs)param;
-            if (e.Action == NotifyCollectionChangedAction.Remove ||
-                e.Action == NotifyCollectionChangedAction.Replace)
+            try
             {
-                foreach (T item in e.OldItems)
-                    item.PropertyChanged -= ChildPropertyChanged;
+                var e = (NotifyCollectionChangedEventArgs)param;
+                if (e.Action == NotifyCollectionChangedAction.Remove ||
+                    e.Action == NotifyCollectionChangedAction.Replace)
+                {
+                    foreach (T item in e.OldItems)
+                        item.PropertyChanged -= ChildPropertyChanged;
+                }
+
+                if (e.Action == NotifyCollectionChangedAction.Add ||
+                    e.Action == NotifyCollectionChangedAction.Replace)
+                {
+                    foreach (T item in e.NewItems)
+                        item.PropertyChanged += ChildPropertyChanged;
+                }
+                base.OnCollectionChanged(e);
+            }
+            catch (Exception ex)
+            {
+
+                throw;
             }
 
-            if (e.Action == NotifyCollectionChangedAction.Add ||
-                e.Action == NotifyCollectionChangedAction.Replace)
-            {
-                foreach (T item in e.NewItems)
-                    item.PropertyChanged += ChildPropertyChanged;
-            }
-            base.OnCollectionChanged(e);
         }
 
         protected void OnItemPropertyChanged(ItemPropertyChangedEventArgs e)
@@ -96,15 +105,23 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (SynchronizationContext.Current == _synchronizationContext)
+            try
             {
-                // Execute the PropertyChanged event on the current thread
-                RaisePropertyChanged(e);
+                if (SynchronizationContext.Current == _synchronizationContext)
+                {
+                    // Execute the PropertyChanged event on the current thread
+                    RaisePropertyChanged(e);
+                }
+                else
+                {
+                    // Raises the PropertyChanged event on the creator thread
+                    _synchronizationContext.Send(RaisePropertyChanged, e);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Raises the PropertyChanged event on the creator thread
-                _synchronizationContext.Send(RaisePropertyChanged, e);
+
+                throw;
             }
         }
 

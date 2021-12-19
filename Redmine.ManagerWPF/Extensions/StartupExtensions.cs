@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.DependencyInjection;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
 using Redmine.ManagerWPF.Desktop.Helpers;

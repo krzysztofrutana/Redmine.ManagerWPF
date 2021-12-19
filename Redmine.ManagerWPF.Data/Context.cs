@@ -23,7 +23,6 @@ namespace Redmine.ManagerWPF.Data
             }
             catch (Exception ex)
             {
-                throw;
             }
         }
 
@@ -59,19 +58,17 @@ namespace Redmine.ManagerWPF.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string connectionString = "";
+            var connectionString = "";
             var databaseName = SettingsHelper.GetDatabaseName();
-            var serverName = SettingsHelper.GetServerName();
-            if (string.IsNullOrWhiteSpace(databaseName) && string.IsNullOrWhiteSpace(serverName))
+            var server = SettingsHelper.GetServerName();
+
+            if (!string.IsNullOrWhiteSpace(databaseName) && !string.IsNullOrWhiteSpace(server))
             {
-                connectionString = "Server=;Database=;Trusted_Connection=True;";
-            }
-            else
-            {
-                connectionString = String.Format(@"Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", serverName, databaseName);
+                connectionString = $"Server={server};Database={databaseName};Trusted_Connection=True;";
             }
 
             optionsBuilder.UseSqlServer(connectionString);
+
             base.OnConfiguring(optionsBuilder);
         }
     }

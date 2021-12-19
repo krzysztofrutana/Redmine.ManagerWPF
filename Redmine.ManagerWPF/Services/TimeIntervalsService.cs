@@ -60,19 +60,9 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return _context.TimeIntervals.Where(x => x.Issue.Id == issueId).ToListAsync();
         }
 
-        public List<TimeInterval> GetTimeIntervalsForIssue(int issueId)
-        {
-            return _context.TimeIntervals.Where(x => x.Issue.Id == issueId).ToList();
-        }
-
         public Task<List<TimeInterval>> GetTimeIntervalsForCommentAsync(int commentId)
         {
             return _context.TimeIntervals.Where(x => x.Comment.Id == commentId).ToListAsync();
-        }
-
-        public List<TimeInterval> GetTimeIntervalsForComment(int commentId)
-        {
-            return _context.TimeIntervals.Where(x => x.Comment.Id == commentId).ToList();
         }
 
         public Task<TimeInterval> GetTimeIntervalAsync(long id)
@@ -136,27 +126,16 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return false;
         }
 
-        public bool CheckIfAnyStartedTimeIntervalExist()
-        {
-            var check = _context.TimeIntervals.FirstOrDefault(x => x.TimeIntervalStart.HasValue && !x.TimeIntervalEnd.HasValue);
-            if (check != null)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         public Task<List<TimeInterval>> GetFinishedForCurrentDateAsync(DateTime date)
         {
             return _context.TimeIntervals
-                .Include(x => x.Issue)
+            .Include(x => x.Issue)
+                .ThenInclude(x => x.Project)
+            .Include(x => x.Comment)
+                .ThenInclude(x => x.Issue)
                     .ThenInclude(x => x.Project)
-                .Include(x => x.Comment)
-                    .ThenInclude(x => x.Issue)
-                        .ThenInclude(x => x.Project)
-                .Where(x => x.TimeIntervalStart.HasValue && x.TimeIntervalStart.Value.Date == date.Date && x.TimeIntervalEnd.HasValue && x.TimeIntervalEnd.Value.Date == date.Date)
-                .ToListAsync();
+            .Where(x => x.TimeIntervalStart.HasValue && x.TimeIntervalStart.Value.Date == date.Date && x.TimeIntervalEnd.HasValue && x.TimeIntervalEnd.Value.Date == date.Date)
+            .ToListAsync();
         }
     }
 }

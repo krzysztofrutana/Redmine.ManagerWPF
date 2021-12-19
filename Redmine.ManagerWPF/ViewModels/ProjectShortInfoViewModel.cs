@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Projects;
 using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -23,6 +24,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private readonly ProjectService _projectService;
         private readonly IMapper _mapper;
+        private readonly IMessageBoxService _messageBoxService;
 
         public IRelayCommand OpenBrowserCommand { get; }
 
@@ -30,6 +32,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
+            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
             WeakReferenceMessenger.Default.Register<ProjectChangeMessage>(this, (r, m) =>
             {
@@ -39,17 +42,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             OpenBrowserCommand = new RelayCommand(OpenBrowser);
         }
 
-        private void ReceiveProject(ListItemModel value)
+        private async void ReceiveProject(ListItemModel value)
         {
-            Task.Run(async () =>
+            try
             {
-                var project = await _projectService.GetProjectAsync(value.Id);
+                var project = await _projectService.GetProjectAsync(value.Id).ConfigureAwait(false);
                 if (project != null)
                 {
                     var formModel = _mapper.Map<DetailsModel>(project);
                     SelectedProject = formModel;
                 }
-            });
+            }
+            catch (System.Exception ex)
+            {
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu projektu do szczegółów");
+            }
         }
 
         private void OpenBrowser()

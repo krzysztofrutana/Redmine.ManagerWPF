@@ -15,5 +15,6 @@ namespace Redmine.ManagerWPF.Data.Models
         public ICollection<Issue> Issues { get; set; }
         public Project Project { get; set; }
         public string Status { get; set; }
+        public bool Done { get; set; }
     }
 }

@@ -5,17 +5,25 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
              xmlns:local="clr-namespace:Redmine.ManagerWPF.Desktop.Views.UserControls"
+             xmlns:conv="clr-namespace:Redmine.ManagerWPF.Desktop.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.DataContext>
         <vm:IssueFormViewModel x:Name="ViewModel" />
     </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:InvertableBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid MaxHeight="400">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="200" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -23,25 +31,43 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Row="0" Text="Nazwa:" Margin="5,10,10,0" />
-        <TextBox Grid.Row="1" Margin="5,0,10,0" Text="{Binding IssueFormModel.Name, Mode=TwoWay}" />
-        <TextBlock
+        <Grid Grid.Row="0" Grid.ColumnSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Row="0" Text="Nazwa:" Margin="5,10,10,0" />
+            <TextBox Grid.Row="1" Margin="5,0,10,0" Text="{Binding IssueFormModel.Name, Mode=TwoWay}" />
+            <TextBlock
             Grid.Row="0"
             Grid.Column="1"
             Margin="5,10,10,0"
             Text="Status:" />
-        <TextBox
+            <TextBox
             Grid.Row="1"
             Grid.Column="1"
             Margin="5,0,10,0"
             Text="{Binding IssueFormModel.Status, Mode=TwoWay}" />
+            <Button Command="{Binding SetAsDoneCommand}" Visibility="{Binding IssueFormModel.Done, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">
+                <TextBlock Text="Wykonane" TextWrapping="Wrap" />
+            </Button>
+            <Button Command="{Binding SetAsUndoneCommand}" Visibility="{Binding IssueFormModel.Done, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">
+                <TextBlock Text="Niewykonane" TextWrapping="Wrap" />
+            </Button>
+        </Grid>
+
         <TextBlock
-            Grid.Row="2"
+            Grid.Row="1"
             Grid.ColumnSpan="2"
             Margin="5,10,10,0"
             Text="Treść:" />
         <TextBox
-            Grid.Row="3"
+            Grid.Row="2"
             Grid.ColumnSpan="2"
             MaxHeight="250"
             Margin="5,0,10,0"
@@ -49,13 +75,13 @@
             Text="{Binding IssueFormModel.Description, Mode=TwoWay}"
             TextWrapping="Wrap" />
         <TextBlock
-            Grid.Row="4"
+            Grid.Row="3"
             Margin="5,10,10,0"
             Grid.ColumnSpan="2"
             Text="Link:" />
-        <Grid Grid.Row="5"
+        <Grid Grid.Row="4"
             Grid.ColumnSpan="2"
-            Margin="5,0,10,0">
+            Margin="5,0,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

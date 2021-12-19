@@ -39,15 +39,15 @@
         </Grid.ColumnDefinitions>
         <DockPanel Grid.ColumnSpan="2">
             <Menu DockPanel.Dock="Top">
-                <MenuItem Header="_Synchronizacja">
-                    <MenuItem Command="{Binding SynchronizeProjectsCommand}" Header="_Synchronizuj projekty" />
-                    <MenuItem Command="{Binding SynchronizeIssuesCommand}" Header="_Synchronizuj zadania" />
+                <MenuItem FontSize="12" Header="_Synchronizacja">
+                    <MenuItem FontSize="12" Command="{Binding SynchronizeProjectsCommand}" Header="_Synchronizuj projekty" />
+                    <MenuItem FontSize="12" Command="{Binding SynchronizeIssuesCommand}" Header="_Synchronizuj zadania" />
                 </MenuItem>
-                <MenuItem Header="_Opcje">
-                    <MenuItem Command="{Binding OpenSettingsDialogCommand}" Header="_Ustawienia" />
+                <MenuItem FontSize="12" Header="_Opcje">
+                    <MenuItem FontSize="12" Command="{Binding OpenSettingsDialogCommand}" Header="_Ustawienia" />
                 </MenuItem>
-                <MenuItem Header="_Raporty">
-                    <MenuItem Command="{Binding OpenDailyRaportDialogCommand}" Header="_Dzienny raport" />
+                <MenuItem FontSize="12" Header="_Raporty">
+                    <MenuItem FontSize="12" Command="{Binding OpenDailyRaportDialogCommand}" Header="_Dzienny raport" />
                 </MenuItem>
             </Menu>
         </DockPanel>
@@ -58,14 +58,16 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="30" Margin="10,0,0,0" Text="Projekt:" />
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="24" Margin="10,0,0,10" Text="Projekt:" />
             <ComboBox
                 x:Name="projectComboBox"
                 HorizontalAlignment="Stretch"
-                Margin="10,10,10,0"
+                Margin="5,0,5,0"
                 MinWidth="200"
                 Grid.Column="1"
+                Height="70"
                 MinHeight="70"
+                Padding="10,0,0,0"
                 VerticalAlignment="Center"
                 SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
                 ItemsSource="{Binding Projects}">
@@ -82,15 +84,15 @@
                 </Behaviors:Interaction.Triggers>
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel>
+                        <StackPanel VerticalAlignment="Stretch"  Margin="0,0,0,0">
                             <TextBlock
-                                Margin="0,0,0,10"
+                                Margin="0,0,0,0"
                                 FontSize="14"
                                 FontWeight="Bold" 
                                 Text="{Binding Name}"/>
-                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                                <TextBlock FontSize="12" Text="Data rozpoczęcia:" />
-                                <TextBlock FontSize="12" Margin="10,0,0,0" Text="{Binding DataStart}"/>
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal"  Margin="0,0,0,0">
+                                <TextBlock FontSize="11" Text="Data rozpoczęcia:" />
+                                <TextBlock FontSize="11" Margin="10,0,0,0" Text="{Binding DataStart}"/>
                             </StackPanel>
                         </StackPanel>
                     </DataTemplate>
@@ -112,7 +114,14 @@
             </i:Interaction.Behaviors>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type treeModels:TreeModel}" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" />
+                    <Grid HorizontalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                        <TextBlock Margin="20,0,0,0" FontWeight="Bold" Foreground="Green" Grid.Column="1" Text="Wykonane" Visibility="{Binding Done, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </Grid>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>

@@ -58,14 +58,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             StartTimeIntervalAsyncCommand = new AsyncRelayCommand<ListItemModel>(StartTimeInterval);
             EndTimeIntervalAsyncCommand = new AsyncRelayCommand<ListItemModel>(EndTimeInterval);
 
+            TimeIntervalsForNode.Clear();
 
-            WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, async (recipient, mmessage) =>
+            WeakReferenceMessenger.Default.Register<InformationLoadedMessage>(this, (recipient, mmessage) =>
             {
-                await ReceiveNode(mmessage.Value);
+                ReceiveNode(mmessage.Value);
             });
         }
 
-        public async Task ReceiveNode(TreeModel message)
+        public async void ReceiveNode(TreeModel message)
         {
             try
             {
@@ -87,7 +88,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 if (times.Any())
                 {
-                    
+
                     foreach (var item in times)
                     {
                         TimeIntervalsForNode.Add(item);
@@ -102,8 +103,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-
-                throw;
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy czasów");
             }
         }
 
@@ -132,8 +132,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-
-                throw;
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy dodawaniu czasu");
             }
         }
 
@@ -141,7 +140,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             try
             {
-                if(CurrentNodeTimer != null)
+                if (CurrentNodeTimer != null)
                 {
                     CurrentNodeTimer.Dispose();
                 }
@@ -157,8 +156,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-
-                throw;
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy usuwaniu czasu");
             }
         }
 
@@ -166,7 +164,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             try
             {
-                if(await _timeIntervalsService.CheckIfAnyStartedTimeIntervalExistAsync())
+                if (await _timeIntervalsService.CheckIfAnyStartedTimeIntervalExistAsync())
                 {
                     _messageBoxService.ShowWarningInfoBox("Istnieje inne niezakończone zadanie!", "Uwaga");
                     return;
@@ -187,8 +185,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-
-                throw;
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy starcie czasu");
             }
         }
 
@@ -210,16 +207,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 CurrentNodeTimer.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
-
-                throw;
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy stopie czasu");
             }
         }
 
         private void UpdateCountedTime(ListItemModel item)
         {
-            
+
             CurrentNodeTimer = new Timer(SetCountedTime, item, 0, 1000);
         }
 
@@ -229,10 +225,17 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 if (timeInterval.IsStarted)
                 {
-                    if(timeInterval.StartDate.HasValue)
+                    if (timeInterval.StartDate.HasValue)
                     {
                         var totalTime = (DateTime.Now - timeInterval.StartDate.Value);
-                        timeInterval.CountedTime = $"{totalTime.Hours}:{totalTime.Minutes}:{totalTime.Seconds}";
+                        if (totalTime.Days > 0)
+                        {
+                            timeInterval.CountedTime = $"{totalTime.Days} d, {totalTime.Hours}:{totalTime.Minutes}:{totalTime.Seconds}";
+                        }
+                        else
+                        {
+                            timeInterval.CountedTime = $"{totalTime.Hours}:{totalTime.Minutes}:{totalTime.Seconds}";
+                        }
                     }
                 }
             }

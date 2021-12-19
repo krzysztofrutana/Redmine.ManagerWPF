@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,12 +65,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IAsyncRelayCommand SynchronizeProjectsCommand { get; }
         public IRelayCommand CancelCommand { get; }
 
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private readonly IMessageBoxService _messageBoxService;
+
 
         public SynchronizeProjectsViewModel()
         {
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _integrationProjectService = Ioc.Default.GetRequiredService<Integration.Services.ProjectService>();
+            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+
 
             CancelButtonText = "Anuluj";
 
@@ -77,39 +81,35 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             CancelCommand = new RelayCommand(Cancel);
         }
 
-        public Task SynchronizeProject()
+        public async Task SynchronizeProject(CancellationToken token)
         {
-            var token = cancellationTokenSource.Token;
-            return Task.Run(async () =>
+            try
             {
-                try
+                var redmineProjects = await _integrationProjectService.GetProjects();
+                TotalProjectsCount = redmineProjects.Count;
+                Value = 0;
+                ProgressBarValue = 0;
+                var step = 100 / TotalProjectsCount;
+                foreach (var redmineProject in redmineProjects)
                 {
-                    var redmineProjects = await _integrationProjectService.GetProjects();
-                    TotalProjectsCount = redmineProjects.Count;
-                    Value = 0;
-                    ProgressBarValue = 0;
-                    var step = 100 / TotalProjectsCount;
-                    foreach (var redmineProject in redmineProjects)
-                    {
-                        await _projectService.SynchronizeProjects(redmineProject);
-                        Value++;
-                        ProgressBarValue = step * Value;
-                    }
+                    await _projectService.SynchronizeProjects(redmineProject);
+                    Value++;
+                    ProgressBarValue = step * Value;
+                }
 
-                    ShowOk = true;
-                    CancelButtonText = String.Empty;
-                    PrimaryButtonText = "Kliknij by zamknąć";
-                }
-                catch
-                {
-                    throw;
-                }
-            }, token);
+                ShowOk = true;
+                CancelButtonText = String.Empty;
+                PrimaryButtonText = "Kliknij by zamknąć";
+            }
+            catch (Exception ex)
+            {
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji projektów");
+            }
         }
 
         public void Cancel()
         {
-            cancellationTokenSource.Cancel();
+            SynchronizeProjectsCommand.Cancel();
         }
     }
 }

@@ -3,9 +3,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Redmine.ManagerWPF.Data.Enums;
+using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Desktop.Views.ContentDialogs;
+using Redmine.ManagerWPF.Helpers.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -15,7 +20,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
     public class MainWindowViewModel : ObservableRecipient
     {
         public ObservableCollection<Models.Projects.ListItemModel> Projects { get; private set; } = new ObservableCollection<Models.Projects.ListItemModel>();
-        public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new ObservableCollection<Models.Tree.TreeModel>();
+        public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new AsyncObservableCollection<Models.Tree.TreeModel>();
 
         private Models.Projects.ListItemModel _selectedProject;
 
@@ -100,6 +105,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private readonly ProjectService _projectService;
         private readonly IssueService _issueService;
+        private readonly IMessageBoxService _messageBoxService;
 
         public IRelayCommand SynchronizeProjectsCommand { get; }
         public IRelayCommand SynchronizeIssuesCommand { get; }
@@ -113,6 +119,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
+            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
             SynchronizeProjectsCommand = new RelayCommand(ShowSynchronizeProjectDialog);
             SynchronizeIssuesCommand = new RelayCommand(SynchronizeIssuesDialog);
@@ -120,16 +127,43 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             LoadIssuesForProjectAsyncCommand = new AsyncRelayCommand(LoadIssuesForProject);
             OpenSettingsDialogCommand = new RelayCommand(OpenSettingsDialog);
             OpenDailyRaportDialogCommand = new RelayCommand(OpenDailyRaportDialog);
+
+            WeakReferenceMessenger.Default.Register<ChangeSelectedIssueDoneStatus>(this, (r, m) =>
+            {
+                ChangeSelectedAsDone(m.Value);
+            });
+
+            WeakReferenceMessenger.Default.Register<ChangeSelectedCommentDoneStatus>(this, (r, m) =>
+            {
+                ChangeSelectedAsDone(m.Value);
+            });
+        }
+
+        private void ChangeSelectedAsDone(TreeModel value)
+        {
+            if (SelectedNode.Id == value.Id && SelectedNode.Type == value.Type)
+            {
+                SelectedNode.Done = value.Done;
+            }
         }
 
         private async Task LoadProjects()
         {
-            Projects.Clear();
-            var result = await _projectService.GetProjectsAsync();
-            foreach (var item in _mapper.Map<IEnumerable<Models.Projects.ListItemModel>>(result))
+            try
             {
-                Projects.Add(item);
+                Projects.Clear();
+                var result = await _projectService.GetProjectsAsync();
+                foreach (var item in _mapper.Map<IEnumerable<Models.Projects.ListItemModel>>(result))
+                {
+                    Projects.Add(item);
+                }
+
             }
+            catch (System.Exception ex)
+            {
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu projektów");
+            }
+
         }
 
         private void ShowSynchronizeProjectDialog()
@@ -146,15 +180,23 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private async Task LoadIssuesForProject()
         {
-            if (SelectedProject != null && SelectedProject.Id > 0)
+            try
             {
-                Issues.Clear();
-                var result = await _issueService.GetIssuesByProjectIdAsync(SelectedProject.Id);
-                foreach (var item in _mapper.Map<IEnumerable<Models.Tree.TreeModel>>(result))
+                if (SelectedProject != null && SelectedProject.Id > 0)
                 {
-                    Issues.Add(item);
+                    Issues.Clear();
+                    var result = await _issueService.GetIssuesByProjectIdAsync(SelectedProject.Id);
+                    foreach (var item in _mapper.Map<IEnumerable<Models.Tree.TreeModel>>(result))
+                    {
+                        Issues.Add(item);
+                    }
                 }
             }
+            catch (System.Exception ex)
+            {
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy zadań");
+            }
+
         }
 
         private void OpenSettingsDialog()

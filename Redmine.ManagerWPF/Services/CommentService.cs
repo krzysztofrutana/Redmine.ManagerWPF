@@ -28,33 +28,35 @@ namespace Redmine.ManagerWPF.Desktop.Services
         public Task<Comment> GetCommentWithTimeIntervalAsync(int id)
         {
             return _context.Comments
-                .Include(x => x.TimeForComment)
-                .SingleOrDefaultAsync(x => x.Id == id);
+            .Include(x => x.TimeForComment)
+            .SingleOrDefaultAsync(x => x.Id == id);
         }
 
         public Task<List<Comment>> GetCommentByIssueIdAsync(long issueId)
         {
-            var result = _context.Comments.AsQueryable();
-
-            result = result.Where(x => x.Issue.Id == issueId);
-
-            return result.ToListAsync();
+            return _context.Comments
+            .Where(x => x.Issue.Id == issueId)
+            .ToListAsync();
         }
 
         public Task<List<Comment>> GetCommentByIssuesIdsAsync(List<int> issuesIds)
         {
-            var result = _context.Comments.AsQueryable();
-
-            result = result.Where(x => issuesIds.Contains(x.Issue.Id));
-
-            return result.ToListAsync();
+            return _context.Comments
+            .Include(x => x.Issue)
+            .Where(x => issuesIds.Contains(x.Issue.Id))
+            .ToListAsync();
         }
 
+        public async Task Update(Comment entity)
+        {
+            _context.Update(entity);
+            await _context.SaveChangesAsync();
+        }
         public async Task SynchronizeCommentAsync(Integration.Models.JournalDto redmineComment, Issue issue)
         {
             try
             {
-                var existingComment = _context.Comments.FirstOrDefault(x => x.SourceId == redmineComment.Id);
+                var existingComment = await _context.Comments.FirstOrDefaultAsync(x => x.SourceId == redmineComment.Id);
 
                 if (existingComment == null)
                 {

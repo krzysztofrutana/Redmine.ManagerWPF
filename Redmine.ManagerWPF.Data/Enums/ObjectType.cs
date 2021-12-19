@@ -7,6 +7,8 @@ namespace Redmine.ManagerWPF.Data.Enums
     public enum ObjectType
     {
         Issue,
-        Comment
+        Comment,
+        Project,
+        TimeInterval
     }
 }

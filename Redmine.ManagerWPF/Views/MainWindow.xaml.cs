@@ -28,11 +28,11 @@ namespace Redmine.ManagerWPF.Views
             InitializeComponent();
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             var _timeIntervalService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
 
-            if (_timeIntervalService.CheckIfAnyStartedTimeIntervalExist())
+            if (await _timeIntervalService.CheckIfAnyStartedTimeIntervalExistAsync())
             {
                 var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
                 _messageBoxService.ShowWarningInfoBox("Proszę zakończyć wszystkie zadania!", "Uwaga");
