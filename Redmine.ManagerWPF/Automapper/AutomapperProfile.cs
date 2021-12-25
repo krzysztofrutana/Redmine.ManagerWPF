@@ -43,13 +43,21 @@ namespace Redmine.ManagerWPF.Desktop.Automapper
                 .ForMember(x => x.Id, m => m.Ignore())
                 .ForMember(x => x.Description, m => m.MapFrom(s => s.Description))
                 .ForMember(x => x.Comments, m => m.Ignore())
-                .ForMember(x => x.Link, m => m.MapFrom<Resolvers.IssueLinkResolver>());
+                .ForMember(x => x.Link, m => m.MapFrom<Resolvers.IssueLinkResolver>())
+                .ReverseMap();
 
             CreateMap<Issue, Models.Tree.TreeModel>()
                 .ForMember(x => x.Type, m => m.MapFrom<Resolvers.TreeModelTypeResolver>())
                 .ForMember(X => X.Children, m => m.MapFrom<Resolvers.TreeChildrenResolver>());
 
-            CreateMap<Issue, Models.Issues.FormModel>();
+            CreateMap<Issue, Models.Issues.FormModel>()
+                .ReverseMap()
+                .ForMember(x => x.MainTask, m => m.Ignore())
+                .ForMember(x => x.TimesForIssue, m => m.Ignore())
+                .ForMember(x => x.SourceId, m => m.MapFrom(s => -1))
+                .ForMember(x => x.Comments, m => m.Ignore())
+                .ForMember(x => x.Issues, m => m.Ignore())
+                .ForMember(x => x.Project, m => m.Ignore());
         }
 
         private void Comment()

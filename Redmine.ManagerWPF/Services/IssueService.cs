@@ -168,5 +168,24 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Issue> Create(Issue issue)
+        {
+            if (issue == null)
+            {
+                throw new ArgumentNullException(nameof(issue));
+            }
+
+            await _context.AddAsync(issue);
+            await _context.SaveChangesAsync();
+
+            return issue;
+        }
+
+        public async Task Delete(Issue issue)
+        {
+            _context.Remove(issue);
+            await _context.SaveChangesAsync();
+        }
     }
 }

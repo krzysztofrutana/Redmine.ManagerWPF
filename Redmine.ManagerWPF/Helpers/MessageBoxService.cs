@@ -12,5 +12,23 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
         {
             MessageBox.Show(text, caption, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+
+        public void ShowInformationBox(string text, string caption)
+        {
+            MessageBox.Show(text, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        public bool ShowConfirmationBox(string text, string caption)
+        {
+            var result = MessageBox.Show(text, caption, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

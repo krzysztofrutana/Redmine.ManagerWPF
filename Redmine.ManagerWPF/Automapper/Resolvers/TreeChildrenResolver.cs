@@ -16,16 +16,25 @@ namespace Redmine.ManagerWPF.Desktop.Automapper.Resolvers
 
         public ObservableCollection<TreeModel> Resolve(Issue source, TreeModel destination, ObservableCollection<TreeModel> destMember, ResolutionContext context)
         {
-            if (source.Issues.Count == 0)
+            var list = new ObservableCollection<TreeModel>();
+
+            if (source.Issues != null)
             {
-                var list = _mapper.Map<ObservableCollection<TreeModel>>(source.Comments);
-                return list;
+                foreach (var issue in source.Issues)
+                {
+                    list.Add(_mapper.Map<TreeModel>(issue));
+                }
             }
-            else
+
+            if (source.Comments != null)
             {
-                var list = _mapper.Map<ObservableCollection<TreeModel>>(source.Issues);
-                return list;
+                foreach (var comment in source.Comments)
+                {
+                    list.Add(_mapper.Map<TreeModel>(comment));
+                }
             }
+
+            return list;
         }
     }
 }

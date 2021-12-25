@@ -13,7 +13,9 @@ using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -105,6 +107,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private readonly ProjectService _projectService;
         private readonly IssueService _issueService;
+        private readonly TimeIntervalsService _timeIntervalsService;
         private readonly IMessageBoxService _messageBoxService;
 
         public IRelayCommand SynchronizeProjectsCommand { get; }
@@ -113,12 +116,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IAsyncRelayCommand LoadIssuesForProjectAsyncCommand { get; }
         public IRelayCommand OpenSettingsDialogCommand { get; }
         public IRelayCommand OpenDailyRaportDialogCommand { get; }
+        public IRelayCommand AddIssueForProjectCommand { get; }
+        public IAsyncRelayCommand DeleteIssueFromProjectCommand { get; }
 
         public MainWindowViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
+            _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
             SynchronizeProjectsCommand = new RelayCommand(ShowSynchronizeProjectDialog);
@@ -127,6 +133,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             LoadIssuesForProjectAsyncCommand = new AsyncRelayCommand(LoadIssuesForProject);
             OpenSettingsDialogCommand = new RelayCommand(OpenSettingsDialog);
             OpenDailyRaportDialogCommand = new RelayCommand(OpenDailyRaportDialog);
+            AddIssueForProjectCommand = new RelayCommand(OpenAddIsuueToProjectDialog);
+            DeleteIssueFromProjectCommand = new AsyncRelayCommand(DeleteIsuueFromProject);
 
             WeakReferenceMessenger.Default.Register<ChangeSelectedIssueDoneStatus>(this, (r, m) =>
             {
@@ -137,6 +145,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 ChangeSelectedAsDone(m.Value);
             });
+
+            WeakReferenceMessenger.Default.Register<AddIssueToProjectMessage>(this, (r, m) =>
+            {
+                AddToTreeView(m.Value);
+            });
+        }
+
+        private void AddToTreeView(Data.Models.Issue value)
+        {
+            if (value != null)
+            {
+                var issue = _mapper.Map<Models.Tree.TreeModel>(value);
+                Issues.Add(issue);
+            }
         }
 
         private void ChangeSelectedAsDone(TreeModel value)
@@ -157,13 +179,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 {
                     Projects.Add(item);
                 }
-
             }
             catch (System.Exception ex)
             {
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu projektów");
             }
-
         }
 
         private void ShowSynchronizeProjectDialog()
@@ -196,7 +216,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy zadań");
             }
-
         }
 
         private void OpenSettingsDialog()
@@ -209,6 +228,84 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             var dialog = new DailyRaport();
             dialog.ShowAsync();
+        }
+
+        private void OpenAddIsuueToProjectDialog()
+        {
+            if (SelectedProject != null)
+            {
+                var dialog = new AddIssueToProject();
+                dialog.ShowAsync();
+                WeakReferenceMessenger.Default.Send(new SelectedProjectMessage(SelectedProject));
+            }
+            else
+            {
+                _messageBoxService.ShowWarningInfoBox("By dodać zadanie pierwsze wybierz projekt", "Brak wybranego projektu");
+            }
+        }
+
+        private async Task DeleteIsuueFromProject()
+        {
+            try
+            {
+                if (SelectedNode != null && SelectedNode.Type == nameof(ObjectType.Issue))
+                {
+                    var result = _messageBoxService.ShowConfirmationBox("Czy na pewno chcesz usunąć zaznaczone zadanie?", "Uwaga");
+                    if (result)
+                    {
+                        var timeIntervalsForSelectedIssue = await _timeIntervalsService.GetTimeIntervalsForIssueAsync(SelectedNode.Id);
+                        foreach (var timeInterval in timeIntervalsForSelectedIssue)
+                        {
+                            await _timeIntervalsService.DeleteAsync(timeInterval);
+                        }
+
+                        var issue = _issueService.GetIssue(SelectedNode.Id);
+                        if (issue != null)
+                        {
+                            await _issueService.Delete(issue);
+                        }
+
+                        var nodeToSearch = SelectedNode;
+                        SelectedNode = null;
+
+                        var isDeleted = DeleteNodeFromTree(nodeToSearch, Issues);
+                        if (isDeleted)
+                        {
+                            _messageBoxService.ShowInformationBox("Pomyślnie usunięto zadanie", "Usuwanie zakończone powodzeniem");
+                        }
+                    }
+                }
+                else
+                {
+                    _messageBoxService.ShowWarningInfoBox("Nie wybrano zadania do usunięcia", "Brak wybranego projektu");
+                }
+            }
+            catch (Exception ex)
+            {
+                _messageBoxService.ShowWarningInfoBox(ex.Message, "Brak wybranego projektu");
+            }
+        }
+
+        private bool DeleteNodeFromTree(TreeModel item, ObservableCollection<TreeModel> treeStructure)
+        {
+            if (treeStructure.Any(x => x.Id == item.Id && x.Type == item.Type))
+            {
+                return treeStructure.Remove(item);
+            }
+            else
+            {
+                foreach (var node in treeStructure)
+                {
+                    var result = DeleteNodeFromTree(item, node.Children);
+
+                    if (result)
+                    {
+                        return result;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

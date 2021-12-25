@@ -32,6 +32,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -55,8 +56,8 @@
             Grid.Row="1"
             Grid.Column="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="24" Margin="10,0,0,10" Text="Projekt:" />
             <ComboBox
@@ -73,13 +74,13 @@
                 ItemsSource="{Binding Projects}">
                 <Behaviors:Interaction.Triggers>
                     <Behaviors:EventTrigger EventName="SelectionChanged" SourceObject="{Binding ElementName=projectComboBox}">
-                        <Behaviors:InvokeCommandAction Command="{Binding LoadIssuesForProjectAsyncCommand}"/>
+                        <Behaviors:InvokeCommandAction Command="{Binding LoadIssuesForProjectAsyncCommand}" />
                     </Behaviors:EventTrigger>
                     <Behaviors:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=projectComboBox}">
-                        <Behaviors:InvokeCommandAction Command="{Binding LoadProjectsAsyncCommand}"/>
+                        <Behaviors:InvokeCommandAction Command="{Binding LoadProjectsAsyncCommand}" />
                     </Behaviors:EventTrigger>
                     <Behaviors:EventTrigger EventName="DropDownOpened" SourceObject="{Binding ElementName=projectComboBox}">
-                        <Behaviors:InvokeCommandAction Command="{Binding LoadProjectsAsyncCommand}"/>
+                        <Behaviors:InvokeCommandAction Command="{Binding LoadProjectsAsyncCommand}" />
                     </Behaviors:EventTrigger>
                 </Behaviors:Interaction.Triggers>
                 <ComboBox.ItemTemplate>
@@ -88,11 +89,11 @@
                             <TextBlock
                                 Margin="0,0,0,0"
                                 FontSize="14"
-                                FontWeight="Bold" 
-                                Text="{Binding Name}"/>
+                                FontWeight="Bold"
+                                Text="{Binding Name}" />
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal"  Margin="0,0,0,0">
                                 <TextBlock FontSize="11" Text="Data rozpoczęcia:" />
-                                <TextBlock FontSize="11" Margin="10,0,0,0" Text="{Binding DataStart}"/>
+                                <TextBlock FontSize="11" Margin="10,0,0,0" Text="{Binding DataStart}" />
                             </StackPanel>
                         </StackPanel>
                     </DataTemplate>
@@ -110,14 +111,14 @@
             VerticalAlignment="Stretch"
             ItemsSource="{Binding Issues}">
             <i:Interaction.Behaviors>
-                <customBehaviors:TreeViewBehavior/>
+                <customBehaviors:TreeViewBehavior />
             </i:Interaction.Behaviors>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type treeModels:TreeModel}" ItemsSource="{Binding Children}">
                     <Grid HorizontalAlignment="Stretch">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{Binding Name}" />
                         <TextBlock Margin="20,0,0,0" FontWeight="Bold" Foreground="Green" Grid.Column="1" Text="Wykonane" Visibility="{Binding Done, Converter={StaticResource BooleanToVisibilityConverter}}" />
@@ -126,18 +127,27 @@
             </TreeView.ItemTemplate>
         </TreeView>
         <Grid Grid.Row="1" Grid.Column="1" Visibility="{Binding ViewProjectDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <uc:ProjectShortInfo VerticalAlignment="Center" Margin="0,10,0,10"/>
+            <uc:ProjectShortInfo VerticalAlignment="Center" Margin="0,10,0,10" />
         </Grid>
         <Grid Grid.Row="2" Grid.Column="1" Visibility="{Binding ViewIssueDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <uc:IssueForm Margin="0,10,0,10"  />
+            <uc:IssueForm Margin="0,10,0,10" />
         </Grid>
         <Grid Grid.Row="2" Grid.Column="1" Visibility="{Binding ViewCommentDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <uc:CommentForm Margin="0,10,0,10"  />
+            <uc:CommentForm Margin="0,10,0,10" />
         </Grid>
-        <Grid Grid.Row="3" Grid.Column="1" Visibility="{Binding ViewTimeIntervalList, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid Grid.Row="3" Grid.RowSpan="2" Grid.Column="1" Visibility="{Binding ViewTimeIntervalList, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ScrollViewer>
-                <uc:TimeIntervalList Margin="0,10,0,10"  />
+                <uc:TimeIntervalList Margin="0,10,0,10" />
             </ScrollViewer>
+        </Grid>
+        <Grid Grid.Row="4" Margin="10,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Command="{Binding AddIssueForProjectCommand}" Grid.Column="0" HorizontalAlignment="Center" Content="Dodaj zadanie"></Button>
+            <Button Command="{Binding DeleteIssueFromProjectCommand}" Grid.Column="1" HorizontalAlignment="Center" Content="Usuń zadanie"></Button>
         </Grid>
     </Grid>
 </Window>
