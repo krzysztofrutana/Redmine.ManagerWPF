@@ -1,5 +1,4 @@
-﻿using ModernWpf.Controls;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -12,14 +11,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
+namespace Redmine.ManagerWPF.Desktop.Views.UserControls
 {
     /// <summary>
-    /// Logika interakcji dla klasy SynchronizeProjects.xaml
+    /// Logika interakcji dla klasy CommentSearchWindowForm.xaml
     /// </summary>
-    public partial class SynchronizeIssues : ContentDialog
+    public partial class CommentSearchWindowForm : UserControl
     {
-        public SynchronizeIssues()
+        public CommentSearchWindowForm()
         {
             InitializeComponent();
         }

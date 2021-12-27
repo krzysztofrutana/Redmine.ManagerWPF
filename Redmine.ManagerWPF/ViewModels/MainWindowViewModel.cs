@@ -9,6 +9,7 @@ using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Desktop.Views.ContentDialogs;
+using Redmine.ManagerWPF.Desktop.Views.Windows;
 using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -117,6 +118,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand OpenSettingsDialogCommand { get; }
         public IRelayCommand OpenDailyRaportDialogCommand { get; }
         public IRelayCommand AddIssueForProjectCommand { get; }
+        public IRelayCommand OpenSearchWindowCommand { get; }
         public IAsyncRelayCommand DeleteIssueFromProjectCommand { get; }
 
         public MainWindowViewModel()
@@ -134,6 +136,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             OpenSettingsDialogCommand = new RelayCommand(OpenSettingsDialog);
             OpenDailyRaportDialogCommand = new RelayCommand(OpenDailyRaportDialog);
             AddIssueForProjectCommand = new RelayCommand(OpenAddIsuueToProjectDialog);
+            OpenSearchWindowCommand = new RelayCommand(OpenSearchWindow);
             DeleteIssueFromProjectCommand = new AsyncRelayCommand(DeleteIsuueFromProject);
 
             WeakReferenceMessenger.Default.Register<ChangeSelectedIssueDoneStatus>(this, (r, m) =>
@@ -228,6 +231,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             var dialog = new DailyRaport();
             dialog.ShowAsync();
+        }
+
+        private void OpenSearchWindow()
+        {
+            if (SelectedProject != null)
+            {
+                var dialog = new SearchWindow();
+                dialog.Show();
+                WeakReferenceMessenger.Default.Send(new SelectedProjectMessage(SelectedProject));
+            }
+            else
+            {
+                _messageBoxService.ShowWarningInfoBox("Najpierw należy wybrać projekt w którym nastąpi wyszukiwanie", "Brak wybranego projektu");
+            }
         }
 
         private void OpenAddIsuueToProjectDialog()

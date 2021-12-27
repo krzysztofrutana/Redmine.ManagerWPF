@@ -47,11 +47,21 @@ namespace Redmine.ManagerWPF.Desktop.Services
             .ToListAsync();
         }
 
+        public Task<List<Comment>> GetCommentByIssuesIdsWithPhraseAsync(List<int> issuesIds, string searchPhrase)
+        {
+            return _context.Comments
+            .AsNoTracking()
+            .Include(x => x.Issue)
+            .Where(x => issuesIds.Contains(x.Issue.Id) && x.Text.Contains(searchPhrase))
+            .ToListAsync();
+        }
+
         public async Task Update(Comment entity)
         {
             _context.Update(entity);
             await _context.SaveChangesAsync();
         }
+
         public async Task SynchronizeCommentAsync(Integration.Models.JournalDto redmineComment, Issue issue)
         {
             try

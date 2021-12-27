@@ -29,6 +29,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\ContentDialogs\SearchPhraseInProject.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\ContentDialogs\DailyRaport.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -41,6 +44,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Views\ContentDialogs\SearchPhraseInProject.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Views\ContentDialogs\DailyRaport.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
@@ -52,6 +59,12 @@
     <Page Update="Views\ContentDialogs\SynchronizeIssues.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Views\UserControls\CommentSearchWindowForm.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+    </Page>
+    <Page Update="Views\UserControls\IssueSearchWindowForm.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
     </Page>
   </ItemGroup>
 

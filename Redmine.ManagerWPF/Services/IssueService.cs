@@ -28,7 +28,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task<List<Issue>> GetIssuesByProjectIdAsync(long projectId)
         {
-            var issues = await _context.Issues.Include(x => x.Issues).Where(x => x.Project.Id == projectId).ToListAsync();
+            var issues = await _context.Issues.Where(x => x.Project.Id == projectId).ToListAsync();
 
             issues = await GetCommentForIssues(issues);
 
@@ -37,6 +37,23 @@ namespace Redmine.ManagerWPF.Desktop.Services
             CreateTree(mainIssues, issues);
 
             return mainIssues;
+        }
+
+        private void CreateTree(List<Issue> parents, List<Issue> issues)
+        {
+            if (parents.Count > 0)
+            {
+                foreach (var item in parents)
+                {
+                    var currentParrent = issues.Where(x => x.MainTask != null && x.MainTask.Id == item.Id).OrderBy(x => x.Name).ToList();
+                    item.Issues = currentParrent;
+                    CreateTree(currentParrent, issues);
+                }
+            }
+            else
+            {
+                return;
+            }
         }
 
         private async Task<List<Issue>> GetCommentForIssues(List<Issue> issues)
@@ -79,23 +96,6 @@ namespace Redmine.ManagerWPF.Desktop.Services
         {
             _context.Update(entity);
             await _context.SaveChangesAsync();
-        }
-
-        private void CreateTree(List<Issue> parents, List<Issue> issues)
-        {
-            if (parents.Count > 0)
-            {
-                foreach (var item in parents)
-                {
-                    var currentParrent = issues.Where(x => x.MainTask != null && x.MainTask.Id == item.Id).OrderBy(x => x.Name).ToList();
-                    item.Issues = currentParrent;
-                    CreateTree(currentParrent, issues);
-                }
-            }
-            else
-            {
-                return;
-            }
         }
 
         public async Task SynchronizeIssues(Integration.Models.IssueDto redmineIssue)
@@ -186,6 +186,33 @@ namespace Redmine.ManagerWPF.Desktop.Services
         {
             _context.Remove(issue);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Issue>> SearchInIssuesAndComments(string searchPhrase, long projectId)
+        {
+            var issues = await _context.Issues
+                .AsNoTracking()
+                .Where(x => x.Project.Id == projectId)
+                .Where(x => x.Name.Contains(searchPhrase) || x.Description.Contains(searchPhrase)
+                            || x.Comments.Any(s => s.Text.Contains(searchPhrase)))
+                .ToListAsync();
+
+            issues = await GetCommentEWithPhreaseForIssues(issues, searchPhrase);
+
+            return issues;
+        }
+
+        private async Task<List<Issue>> GetCommentEWithPhreaseForIssues(List<Issue> issues, string searchPhrase)
+        {
+            var issuesIds = issues.Select(x => x.Id).ToList();
+            var comments = await _commentService.GetCommentByIssuesIdsWithPhraseAsync(issuesIds, searchPhrase);
+
+            foreach (var item in issues)
+            {
+                item.Comments = comments.Where(x => x.Issue.Id == item.Id).OrderBy(x => x.Date).ToList();
+            }
+
+            return issues;
         }
     }
 }

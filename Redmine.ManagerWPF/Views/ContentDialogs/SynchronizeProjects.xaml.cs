@@ -26,7 +26,7 @@ namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
 
         private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            sender.Hide();
+            return;
         }
     }
 }

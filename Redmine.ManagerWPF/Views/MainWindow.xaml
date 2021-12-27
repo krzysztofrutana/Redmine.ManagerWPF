@@ -50,6 +50,9 @@
                 <MenuItem FontSize="12" Header="_Raporty">
                     <MenuItem FontSize="12" Command="{Binding OpenDailyRaportDialogCommand}" Header="_Dzienny raport" />
                 </MenuItem>
+                <MenuItem FontSize="12" Header="_Wyszukiwanie">
+                    <MenuItem FontSize="12" Command="{Binding OpenSearchWindowCommand}" Header="_W zadaniach i komentarzach" />
+                </MenuItem>
             </Menu>
         </DockPanel>
         <Grid
@@ -111,7 +114,7 @@
             VerticalAlignment="Stretch"
             ItemsSource="{Binding Issues}">
             <i:Interaction.Behaviors>
-                <customBehaviors:TreeViewBehavior />
+                <customBehaviors:MainWindowTreeViewBehavior />
             </i:Interaction.Behaviors>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type treeModels:TreeModel}" ItemsSource="{Binding Children}">

@@ -91,7 +91,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly IMessageBoxService _messageBoxService;
 
         public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
-        public IRelayCommand CancelCommand { get; }
+        public IAsyncRelayCommand CancelCommand { get; }
 
         public SynchronizeIssuesViewModel()
         {
@@ -99,11 +99,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _integrationIssueService = Ioc.Default.GetRequiredService<Integration.Services.IssueService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
-
             CancelButtonText = "Anuluj";
+            PrimaryButtonText = "Rozpocznij";
 
             SynchronizeIssuesCommand = new AsyncRelayCommand(SynchronizeIssues);
-            CancelCommand = new RelayCommand(Cancel);
+            CancelCommand = new AsyncRelayCommand(Cancel);
         }
 
         public async Task SynchronizeIssues(CancellationToken token)
@@ -155,14 +155,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji zadań");
-
             }
-
         }
 
-        public void Cancel()
+        public Task Cancel()
         {
             SynchronizeIssuesCommand.Cancel();
+
+            return Task.CompletedTask;
         }
 
         private void SetStatus(SynchronizeIssueStatusType status)
@@ -190,7 +190,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 case SynchronizeIssueStatusType.AllDone:
                     ShowOk = true;
                     CancelButtonText = String.Empty;
-                    PrimaryButtonText = "Kliknij by zamknąć";
+                    CancelButtonText = "Kliknij by zamknąć";
                     ProgressBarValue = 100;
                     break;
             }

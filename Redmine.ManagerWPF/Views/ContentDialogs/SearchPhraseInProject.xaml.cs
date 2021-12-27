@@ -15,13 +15,18 @@ using System.Windows.Shapes;
 namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
 {
     /// <summary>
-    /// Logika interakcji dla klasy SynchronizeProjects.xaml
+    /// Interaction logic for SearchPhraseInProject.xaml
     /// </summary>
-    public partial class SynchronizeIssues : ContentDialog
+    public partial class SearchPhraseInProject : ContentDialog
     {
-        public SynchronizeIssues()
+        public SearchPhraseInProject()
         {
             InitializeComponent();
+        }
+
+        private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        {
+            sender.Hide();
         }
     }
 }

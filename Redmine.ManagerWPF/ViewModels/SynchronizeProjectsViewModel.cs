@@ -67,15 +67,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private readonly IMessageBoxService _messageBoxService;
 
-
         public SynchronizeProjectsViewModel()
         {
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _integrationProjectService = Ioc.Default.GetRequiredService<Integration.Services.ProjectService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
-
             CancelButtonText = "Anuluj";
+            PrimaryButtonText = "Rozpocznij";
 
             SynchronizeProjectsCommand = new AsyncRelayCommand(SynchronizeProject);
             CancelCommand = new RelayCommand(Cancel);
@@ -99,7 +98,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 ShowOk = true;
                 CancelButtonText = String.Empty;
-                PrimaryButtonText = "Kliknij by zamknąć";
+                CancelButtonText = "Kliknij by zamknąć";
             }
             catch (Exception ex)
             {

@@ -6,55 +6,51 @@
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
                    xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
-                  mc:Ignorable="d" 
+                  mc:Ignorable="d"
                   Title="Synchronizacja zadań i komentarzy"
-             d:DesignHeight="200" d:DesignWidth="400"
+             d:DesignHeight="300" d:DesignWidth="500"
+                  PrimaryButtonCommand="{Binding SynchronizeIssuesCommand}"
                   CloseButtonText="{Binding CancelButtonText}"
                   CloseButtonCommand="{Binding CancelCommand}"
-                  PrimaryButtonText="{Binding PrimaryButtonText}"
-                  PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+                  PrimaryButtonText="{Binding PrimaryButtonText}">
     <ui:ContentDialog.DataContext>
         <vm:SynchronizeIssuesViewModel />
     </ui:ContentDialog.DataContext>
     <ui:ContentDialog.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </ui:ContentDialog.Resources>
-    <Behaviors:Interaction.Triggers>
-        <Behaviors:EventTrigger EventName="Loaded">
-            <Behaviors:InvokeCommandAction Command="{Binding SynchronizeIssuesCommand}"/>
-        </Behaviors:EventTrigger>
-    </Behaviors:Interaction.Triggers>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <ui:ProgressBar
                     IsIndeterminate="False"
                     VerticalAlignment="Center"
                     Value="{Binding ProgressBarValue}"
-                    Margin="0,0,0,10"/>
+                    Margin="0,0,0,10" />
         <StackPanel Grid.Row="1" Orientation="Horizontal" Visibility="{Binding ShowDownloadIssues, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Pobieranie zadań z Redmine:"/>
-            <TextBlock Margin="5,0,5,0" Text="{Binding Value}"/>
-            <TextBlock Text="/"/>
-            <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}"/>
+            <TextBlock Text="Pobieranie zadań z Redmine:" />
+            <TextBlock Margin="5,0,5,0" Text="{Binding Value}" />
+            <TextBlock Text="/" />
+            <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}" />
         </StackPanel>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Visibility="{Binding ShowProgressText, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Zsynchronizowano:"/>
-            <TextBlock Margin="5,0,5,0" Text="{Binding Value}"/>
-            <TextBlock Text="/"/>
-            <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}"/>
+            <TextBlock Text="Zsynchronizowano:" />
+            <TextBlock Margin="5,0,5,0" Text="{Binding Value}" />
+            <TextBlock Text="/" />
+            <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}" />
         </StackPanel>
         <StackPanel Grid.Row="3" Orientation="Horizontal" Visibility="{Binding ShowTreeUpdateText, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Budowa struktury drzewa:"/>
-            <TextBlock Margin="5,0,5,0" Text="{Binding Value}"/>
-            <TextBlock Text="/"/>
-            <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}"/>
+            <TextBlock Text="Budowa struktury drzewa:" />
+            <TextBlock Margin="5,0,5,0" Text="{Binding Value}" />
+            <TextBlock Text="/" />
+            <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}" />
         </StackPanel>
-        <TextBlock Margin="0,10,0,0" Foreground="Green" Visibility="{Binding ShowOk, Converter={StaticResource BooleanToVisibilityConverter}}"  Grid.Row="4" Text="Synchronizacja zakończona powodzeniem."/>
+        <TextBlock Margin="0,10,0,0" Foreground="Green" Visibility="{Binding ShowOk, Converter={StaticResource BooleanToVisibilityConverter}}"  Grid.Row="4" Text="Synchronizacja zakończona powodzeniem." />
     </Grid>
 </ui:ContentDialog>

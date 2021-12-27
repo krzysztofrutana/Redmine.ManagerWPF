@@ -9,7 +9,7 @@ using System.Windows.Interactivity;
 
 namespace Redmine.ManagerWPF.Desktop.Behaviors
 {
-    public class TreeViewBehavior : Behavior<TreeView>
+    public class MainWindowTreeViewBehavior : Behavior<TreeView>
     {
         protected override void OnAttached()
         {
