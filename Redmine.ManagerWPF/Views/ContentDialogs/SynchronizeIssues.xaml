@@ -1,4 +1,5 @@
 ﻿<ui:ContentDialog x:Class="Redmine.ManagerWPF.Desktop.Views.ContentDialogs.SynchronizeIssues"
+                  x:Name="SynchronizeIssuesDialog"
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -9,10 +10,7 @@
                   mc:Ignorable="d"
                   Title="Synchronizacja zadań i komentarzy"
              d:DesignHeight="300" d:DesignWidth="500"
-                  PrimaryButtonCommand="{Binding SynchronizeIssuesCommand}"
-                  CloseButtonText="{Binding CancelButtonText}"
-                  CloseButtonCommand="{Binding CancelCommand}"
-                  PrimaryButtonText="{Binding PrimaryButtonText}">
+                  >
     <ui:ContentDialog.DataContext>
         <vm:SynchronizeIssuesViewModel />
     </ui:ContentDialog.DataContext>
@@ -27,11 +25,12 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <ui:ProgressBar
                     IsIndeterminate="False"
                     VerticalAlignment="Center"
-                    Value="{Binding ProgressBarValue}"
+                    Value="{Binding ProgressBarValue, Mode=TwoWay}"
                     Margin="0,0,0,10" />
         <StackPanel Grid.Row="1" Orientation="Horizontal" Visibility="{Binding ShowDownloadIssues, Converter={StaticResource BooleanToVisibilityConverter}}">
             <TextBlock Text="Pobieranie zadań z Redmine:" />
@@ -52,5 +51,14 @@
             <TextBlock Margin="5,0,0,0" Text="{Binding TotalIssuesCount}" />
         </StackPanel>
         <TextBlock Margin="0,10,0,0" Foreground="Green" Visibility="{Binding ShowOk, Converter={StaticResource BooleanToVisibilityConverter}}"  Grid.Row="4" Text="Synchronizacja zakończona powodzeniem." />
+        <Grid Grid.Row="5" Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Content="{Binding PrimaryButtonText}" Command="{Binding SynchronizeIssuesCommand}"/>
+            <Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Grid.Column="1" Content="{Binding CancelButtonText}" Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=SynchronizeIssuesDialog}"/>
+        </Grid>
+
     </Grid>
 </ui:ContentDialog>

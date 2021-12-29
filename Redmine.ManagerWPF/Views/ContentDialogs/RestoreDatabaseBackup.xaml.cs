@@ -16,18 +16,18 @@ using System.Windows.Shapes;
 namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
 {
     /// <summary>
-    /// Logika interakcji dla klasy SynchronizeProjects.xaml
+    /// Interaction logic for RestoreDatabaseBackup.xaml
     /// </summary>
-    public partial class SynchronizeIssues : ContentDialog, ICloseable
+    public partial class RestoreDatabaseBackup : ContentDialog, ICloseable
     {
-        public SynchronizeIssues()
+        public RestoreDatabaseBackup()
         {
             InitializeComponent();
         }
 
         public void Close()
         {
-            this.Hide();
+            Hide();
         }
     }
 }

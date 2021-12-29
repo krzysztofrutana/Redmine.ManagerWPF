@@ -1,4 +1,5 @@
 ﻿using ModernWpf.Controls;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,16 +18,16 @@ namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
     /// <summary>
     /// Logika interakcji dla klasy SynchronizeProjects.xaml
     /// </summary>
-    public partial class SynchronizeProjects : ContentDialog
+    public partial class SynchronizeProjects : ContentDialog, ICloseable
     {
         public SynchronizeProjects()
         {
             InitializeComponent();
         }
 
-        private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        public void Close()
         {
-            return;
+            this.Hide();
         }
     }
 }

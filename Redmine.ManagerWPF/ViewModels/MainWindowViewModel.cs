@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Desktop.Messages;
@@ -119,7 +120,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand OpenDailyRaportDialogCommand { get; }
         public IRelayCommand AddIssueForProjectCommand { get; }
         public IRelayCommand OpenSearchWindowCommand { get; }
+        public IRelayCommand OpenCreateBackupDialogCommand { get; }
+        public IRelayCommand OpenRestoreBackupDialogCommand { get; }
         public IAsyncRelayCommand DeleteIssueFromProjectCommand { get; }
+        public IRelayCommand<ITrayable> ShowMainWindowCommand { get; }
+        public IRelayCommand<ITrayable> CloseMainWindowCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -137,7 +142,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             OpenDailyRaportDialogCommand = new RelayCommand(OpenDailyRaportDialog);
             AddIssueForProjectCommand = new RelayCommand(OpenAddIsuueToProjectDialog);
             OpenSearchWindowCommand = new RelayCommand(OpenSearchWindow);
+            OpenCreateBackupDialogCommand = new RelayCommand(OpenCreateBackupDialog);
+            OpenRestoreBackupDialogCommand = new RelayCommand(OpenRestoreBackupDialog);
             DeleteIssueFromProjectCommand = new AsyncRelayCommand(DeleteIsuueFromProject);
+            ShowMainWindowCommand = new RelayCommand<ITrayable>(ShowFromTray);
 
             WeakReferenceMessenger.Default.Register<ChangeSelectedIssueDoneStatus>(this, (r, m) =>
             {
@@ -153,6 +161,26 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 AddToTreeView(m.Value);
             });
+        }
+
+        private void OpenCreateBackupDialog()
+        {
+            var dialog = new CreateDatabaseBackup();
+            dialog.ShowAsync();
+        }
+
+        private void OpenRestoreBackupDialog()
+        {
+            var dialog = new RestoreDatabaseBackup();
+            dialog.ShowAsync();
+        }
+
+        public void ShowFromTray(ITrayable window)
+        {
+            if (window != null)
+            {
+                window.OpenFromTray();
+            }
         }
 
         private void AddToTreeView(Data.Models.Issue value)

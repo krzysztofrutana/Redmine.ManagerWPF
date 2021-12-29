@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
@@ -16,12 +17,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly IssueService _issueService;
         private readonly Integration.Services.IssueService _integrationIssueService;
 
-        private int _totalIssuesCount;
+        private string _totalIssuesCount;
 
-        public int TotalIssuesCount
+        public string TotalIssuesCount
         {
             get { return _totalIssuesCount; }
-            set { SetProperty(ref _totalIssuesCount, value); }
+            set { SetProperty(ref _totalIssuesCount, value, nameof(TotalIssuesCount)); }
         }
 
         private int _value;
@@ -29,7 +30,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public int Value
         {
             get { return _value; }
-            set { SetProperty(ref _value, value); }
+            set { SetProperty(ref _value, value, nameof(Value)); }
         }
 
         private decimal _progressBarValue;
@@ -37,7 +38,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public decimal ProgressBarValue
         {
             get { return _progressBarValue; }
-            set { SetProperty(ref _progressBarValue, value); }
+            set { SetProperty(ref _progressBarValue, value, nameof(ProgressBarValue)); }
         }
 
         private bool _showOk;
@@ -91,7 +92,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly IMessageBoxService _messageBoxService;
 
         public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
-        public IAsyncRelayCommand CancelCommand { get; }
+        public IRelayCommand<ICloseable> CancelCommand { get; }
 
         public SynchronizeIssuesViewModel()
         {
@@ -99,26 +100,28 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _integrationIssueService = Ioc.Default.GetRequiredService<Integration.Services.IssueService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
-            CancelButtonText = "Anuluj";
+            CancelButtonText = "Zamknij";
             PrimaryButtonText = "Rozpocznij";
 
             SynchronizeIssuesCommand = new AsyncRelayCommand(SynchronizeIssues);
-            CancelCommand = new AsyncRelayCommand(Cancel);
+            CancelCommand = new RelayCommand<ICloseable>(Cancel);
         }
 
         public async Task SynchronizeIssues(CancellationToken token)
         {
             try
             {
+                decimal fullBarValue = 100;
+
                 SetStatus(SynchronizeIssueStatusType.DownloadIssues);
                 var redmineIssues = await _integrationIssueService.GetIssues();
-                TotalIssuesCount = redmineIssues.Count;
+                TotalIssuesCount = redmineIssues.Count.ToString();
                 Value = 0;
                 ProgressBarValue = 0;
-                var step = 100 / TotalIssuesCount;
+                decimal step = fullBarValue / redmineIssues.Count;
                 foreach (var redmineIssue in redmineIssues)
                 {
-                    await _integrationIssueService.GetIssueJournals(redmineIssue);
+                    redmineIssue.Comments = await _integrationIssueService.GetIssueJournals(redmineIssue);
                     Value++;
                     ProgressBarValue = step * Value;
                 }
@@ -135,10 +138,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 SetStatus(SynchronizeIssueStatusType.BuildTree);
                 var allIssues = await _issueService.GetAllIssueAsync();
-                TotalIssuesCount = allIssues.Count;
+                TotalIssuesCount = allIssues.Count.ToString();
                 Value = 0;
                 ProgressBarValue = 0;
-                step = 100 / TotalIssuesCount;
+                step = fullBarValue / allIssues.Count;
                 foreach (var issue in allIssues)
                 {
                     var redmineIssue = redmineIssues.FirstOrDefault(x => x.Id == issue.SourceId);
@@ -158,11 +161,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        public Task Cancel()
+        public void Cancel(ICloseable dialog)
         {
-            SynchronizeIssuesCommand.Cancel();
-
-            return Task.CompletedTask;
+            if (CancelButtonText == "Przerwij")
+            {
+                SynchronizeIssuesCommand.Cancel();
+                CancelButtonText = "Kliknij by zamknąć";
+            }
+            else
+            {
+                if (dialog != null)
+                {
+                    dialog.Close();
+                }
+            }
         }
 
         private void SetStatus(SynchronizeIssueStatusType status)
@@ -170,6 +182,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             switch (status)
             {
                 case SynchronizeIssueStatusType.DownloadIssues:
+                    TotalIssuesCount = "-";
+                    CancelButtonText = "Przerwij";
                     ShowProgressText = false;
                     ShowDownloadIssues = true;
                     ShowTreeUpdateText = false;

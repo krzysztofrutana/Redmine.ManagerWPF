@@ -1,4 +1,5 @@
 ﻿<ui:ContentDialog x:Class="Redmine.ManagerWPF.Desktop.Views.ContentDialogs.SynchronizeProjects"
+                  x:Name="SynchronizeProjectsDialog"
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -9,11 +10,7 @@
                   mc:Ignorable="d"
                   Title="Synchronizacja projektów"
              d:DesignHeight="200" d:DesignWidth="400"
-                  PrimaryButtonCommand="{Binding SynchronizeProjectsCommand}"
-                  CloseButtonText="{Binding CancelButtonText}"
-                  CloseButtonCommand="{Binding CancelCommand}"
-                  PrimaryButtonText="{Binding PrimaryButtonText}"
-                  PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+                 >
     <ui:ContentDialog.DataContext>
         <vm:SynchronizeProjectsViewModel />
     </ui:ContentDialog.DataContext>
@@ -26,11 +23,12 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <ui:ProgressBar
                     IsIndeterminate="False"
                     VerticalAlignment="Center"
-                    Value="{Binding ProgressBarValue}"
+                    Value="{Binding ProgressBarValue, Mode=TwoWay}"
                     Margin="0,0,0,10" />
         <StackPanel Grid.Row="1" Orientation="Horizontal">
             <TextBlock Text="Zsynchronizowano:" />
@@ -39,5 +37,13 @@
             <TextBlock Margin="5,0,0,0" Text="{Binding TotalProjectsCount}" />
         </StackPanel>
         <TextBlock Margin="0,10,0,0" Foreground="Green" Visibility="{Binding ShowOk, Converter={StaticResource BooleanToVisibilityConverter}}"  Grid.Row="2" Text="Synchronizacja zakończona powodzeniem." />
+        <Grid Grid.Row="3" Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Content="{Binding PrimaryButtonText}" Command="{Binding SynchronizeProjectsCommand}"/>
+            <Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,10,0,0" Grid.Column="1" Content="{Binding CancelButtonText}" Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=SynchronizeProjectsDialog}"/>
+        </Grid>
     </Grid>
 </ui:ContentDialog>

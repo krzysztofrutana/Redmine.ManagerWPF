@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
+using ModernWpf.Controls;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
@@ -63,7 +65,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         }
 
         public IAsyncRelayCommand SynchronizeProjectsCommand { get; }
-        public IRelayCommand CancelCommand { get; }
+        public IRelayCommand<ICloseable> CancelCommand { get; }
 
         private readonly IMessageBoxService _messageBoxService;
 
@@ -73,17 +75,18 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _integrationProjectService = Ioc.Default.GetRequiredService<Integration.Services.ProjectService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
 
-            CancelButtonText = "Anuluj";
+            CancelButtonText = "Zamknij";
             PrimaryButtonText = "Rozpocznij";
 
             SynchronizeProjectsCommand = new AsyncRelayCommand(SynchronizeProject);
-            CancelCommand = new RelayCommand(Cancel);
+            CancelCommand = new RelayCommand<ICloseable>(Cancel);
         }
 
         public async Task SynchronizeProject(CancellationToken token)
         {
             try
             {
+                CancelButtonText = "Przerwij";
                 var redmineProjects = await _integrationProjectService.GetProjects();
                 TotalProjectsCount = redmineProjects.Count;
                 Value = 0;
@@ -106,9 +109,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        public void Cancel()
+        public void Cancel(ICloseable dialog)
         {
-            SynchronizeProjectsCommand.Cancel();
+            if (CancelButtonText == "Przerwij")
+            {
+                SynchronizeProjectsCommand.Cancel();
+                CancelButtonText = "Kliknij by zamknąć";
+            }
+            else
+            {
+                if (dialog != null)
+                {
+                    dialog.Close();
+                }
+            }
         }
     }
 }

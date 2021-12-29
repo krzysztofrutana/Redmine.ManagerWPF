@@ -16,11 +16,11 @@ using System.Windows.Shapes;
 namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
 {
     /// <summary>
-    /// Logika interakcji dla klasy SynchronizeProjects.xaml
+    /// Interaction logic for CreateDatabaseBackup.xaml
     /// </summary>
-    public partial class SynchronizeIssues : ContentDialog, ICloseable
+    public partial class CreateDatabaseBackup : ContentDialog, ICloseable
     {
-        public SynchronizeIssues()
+        public CreateDatabaseBackup()
         {
             InitializeComponent();
         }
@@ -28,6 +28,11 @@ namespace Redmine.ManagerWPF.Desktop.Views.ContentDialogs
         public void Close()
         {
             this.Hide();
+        }
+
+        private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        {
+            sender.Hide();
         }
     }
 }
