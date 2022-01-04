@@ -15,20 +15,28 @@ namespace Redmine.ManagerWPF.Desktop.Services
         private readonly Context _context;
         private readonly IMapper _mapper;
         private readonly CommentService _commentService;
+        private readonly ProjectService _projectService;
 
         public IssueService(
             Context context,
             IMapper mapper,
-            CommentService commentService)
+            CommentService commentService,
+            ProjectService projectService)
         {
             _context = context;
             _mapper = mapper;
             _commentService = commentService;
+            _projectService = projectService;
         }
 
         public async Task<List<Issue>> GetIssuesByProjectIdAsync(long projectId)
         {
             var issues = await _context.Issues.Where(x => x.Project.Id == projectId).ToListAsync();
+
+            foreach (var issue in issues)
+            {
+                await _context.Entry<Issue>(issue).ReloadAsync();
+            }
 
             issues = await GetCommentForIssues(issues);
 
@@ -110,10 +118,12 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var entity = _mapper.Map<Issue>(redmineIssue);
 
-                    var project = await _context.Projects.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ProjectId);
+                    var project = await _projectService.GetProjectBySourceIdAsync(redmineIssue.ProjectId);
                     if (project != null)
                     {
-                        entity.Project = project;
+                        entity.Status = Data.Enums.StatusType.New.ToString();
+                        await _context.Issues.AddAsync(entity);
+                        await _context.SaveChangesAsync();
 
                         if (await _context.Issues.AnyAsync(x => x.SourceId == redmineIssue.ParentIssueId))
                         {
@@ -122,22 +132,25 @@ namespace Redmine.ManagerWPF.Desktop.Services
                             {
                                 entity.MainTask = parentIssue;
                             }
+
+                            _context.Issues.Update(entity);
+                            await _context.SaveChangesAsync();
                         }
-                        entity.Status = Data.Enums.StatusType.New.ToString();
-                        await _context.AddAsync(entity);
+                        entity.Project = project;
+                        _context.Issues.Update(entity);
                         await _context.SaveChangesAsync();
+
                         addedOrUpdatedIssue = entity;
                     }
                 }
                 else
                 {
-                    var project = await _context.Projects.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ProjectId);
+                    var project = await _projectService.GetProjectBySourceIdAsync(redmineIssue.ProjectId);
                     if (project != null)
                     {
-                        existingIssue.Project = project;
-
                         _mapper.Map(redmineIssue, existingIssue);
-                        _context.Update(existingIssue);
+                        existingIssue.Project = project;
+                        _context.Issues.Update(existingIssue);
                         await _context.SaveChangesAsync();
                         addedOrUpdatedIssue = existingIssue;
                     }
@@ -151,7 +164,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 throw;
             }

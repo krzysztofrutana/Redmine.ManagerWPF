@@ -28,7 +28,6 @@ namespace Redmine.ManagerWPF.Views
         public MainWindow()
         {
             InitializeComponent();
-
         }
 
         public async void CloseFromTray()
@@ -53,11 +52,11 @@ namespace Redmine.ManagerWPF.Views
 
 
 
-        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             var _timeIntervalService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
 
-            if (await _timeIntervalService.CheckIfAnyStartedTimeIntervalExistAsync())
+            if (_timeIntervalService.CheckIfAnyStartedTimeIntervalExist())
             {
                 var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
                 _messageBoxService.ShowWarningInfoBox("Proszę zakończyć wszystkie zadania!", "Uwaga");

@@ -32,5 +32,13 @@ namespace Redmine.ManagerWPF.Desktop.Models.TimeIntervals
 
         private bool _isStarted;
         public bool IsStarted { get => _isStarted; set => SetProperty(ref _isStarted, value); }
+
+        public TimeIntervalEditType EditType { get; set; }
+    }
+
+    public enum TimeIntervalEditType
+    {
+        StartDate,
+        EndDate
     }
 }

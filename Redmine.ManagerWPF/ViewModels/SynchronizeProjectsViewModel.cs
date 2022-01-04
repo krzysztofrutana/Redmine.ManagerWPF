@@ -103,6 +103,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 CancelButtonText = String.Empty;
                 CancelButtonText = "Kliknij by zamknąć";
             }
+            catch (ArgumentException)
+            {
+                CancelButtonText = "Kliknij by zamknąć";
+                _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
+            }
             catch (Exception ex)
             {
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji projektów");

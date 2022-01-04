@@ -9,7 +9,7 @@ namespace Redmine.ManagerWPF.Desktop.Converters
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             if (value == null)
-                return Visibility.Hidden;
+                return Visibility.Collapsed;
             else
                 return Visibility.Visible;
         }

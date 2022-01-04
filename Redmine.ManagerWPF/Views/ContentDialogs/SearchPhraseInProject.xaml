@@ -20,7 +20,7 @@
     <ui:ContentDialog.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <conv:InvertableBooleanToVisibilityConverter x:Key="InvertableBooleanToVisibilityConverter" />
+            <conv:InvertBooleanToVisibilityConverter x:Key="InvertBooleanToVisibilityConverter" />
             <conv:IsTimeIntervalTypeConverter x:Key="IsTimeIntervalTypeConverter" />
             <conv:IsEverythingElseThanTimeIntervalConverter x:Key="IsEverythingElseThanTimeIntervalConverter" />
             <conv:StringToVIsibilityConverter x:Key="StringToVIsibilityConverter" />
@@ -35,7 +35,7 @@
             BorderBrush="Black"
             BorderThickness="1"
             VerticalAlignment="Stretch"
-            Visibility="{Binding DataLoading, Converter={StaticResource InvertableBooleanToVisibilityConverter}}"
+            Visibility="{Binding DataLoading, Converter={StaticResource InvertBooleanToVisibilityConverter}}"
             ItemsSource="{Binding RaportData}">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type dailyRaports:ProjectListItemModel}" ItemsSource="{Binding Childrens}">

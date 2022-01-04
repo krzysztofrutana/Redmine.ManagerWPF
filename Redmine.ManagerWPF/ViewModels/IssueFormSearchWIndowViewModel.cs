@@ -60,7 +60,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 if (message.Type == nameof(Data.Models.Issue))
                 {
                     Node = message;
-                    var issue = await _issueService.GetIssueAsync(Node.Id).ConfigureAwait(false);
+                    var issue = await _issueService.GetIssueAsync(Node.Id);
                     if (issue != null)
                     {
                         IssueFormModel = _mapper.Map<FormModel>(issue);

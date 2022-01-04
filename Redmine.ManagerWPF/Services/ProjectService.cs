@@ -13,13 +13,11 @@ namespace Redmine.ManagerWPF.Desktop.Services
     public class ProjectService : IService
     {
         private readonly Context _context;
-        private readonly Integration.Services.ProjectService _projectService;
         private readonly IMapper _mapper;
 
-        public ProjectService(Context context, Integration.Services.ProjectService projectService, IMapper mapper)
+        public ProjectService(Context context, IMapper mapper)
         {
             _context = context;
-            _projectService = projectService;
             _mapper = mapper;
         }
 
@@ -52,6 +50,11 @@ namespace Redmine.ManagerWPF.Desktop.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public Task<Project> GetProjectBySourceIdAsync(int projectSourceId)
+        {
+            return _context.Projects.FirstOrDefaultAsync(x => x.SourceId == projectSourceId);
         }
     }
 }

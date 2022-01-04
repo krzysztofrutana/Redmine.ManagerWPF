@@ -211,6 +211,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     Projects.Add(item);
                 }
             }
+            catch (ArgumentException)
+            {
+            }
             catch (System.Exception ex)
             {
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu projektów");

@@ -1,6 +1,7 @@
 ﻿<Window
     x:Class="Redmine.ManagerWPF.Views.MainWindow"
     x:Name="MainWindowWindow"
+    Icon="/logo.ico"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -63,9 +64,10 @@
             </Menu>
         </DockPanel>
         <tb:TaskbarIcon
+            x:Name="TaskBarIcon"
             ToolTipText="Redmine Manager"
             LeftClickCommand="{Binding ShowMainWindowCommand}" 
-            LeftClickCommandParameter="{Binding ElementName=MainWindowWindow}"
+            LeftClickCommandParameter="{Binding ElementName=MainWindowWindow}" IconSource="/logo.ico"
             >
         </tb:TaskbarIcon>
         <Grid

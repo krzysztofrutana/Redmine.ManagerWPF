@@ -115,15 +115,16 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return null;
         }
 
+        public bool CheckIfAnyStartedTimeIntervalExist()
+        {
+            return _context.TimeIntervals.Any(x => x.TimeIntervalStart.HasValue && !x.TimeIntervalEnd.HasValue);
+
+        }
+
         public async Task<bool> CheckIfAnyStartedTimeIntervalExistAsync()
         {
-            var check = await _context.TimeIntervals.FirstOrDefaultAsync(x => x.TimeIntervalStart.HasValue && !x.TimeIntervalEnd.HasValue);
-            if (check != null)
-            {
-                return true;
-            }
+            return await _context.TimeIntervals.AnyAsync(x => x.TimeIntervalStart.HasValue && !x.TimeIntervalEnd.HasValue);
 
-            return false;
         }
 
         public Task<List<TimeInterval>> GetFinishedForCurrentDateAsync(DateTime date)

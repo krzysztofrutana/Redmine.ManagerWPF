@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
 using Redmine.ManagerWPF.Data.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -73,8 +74,13 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     if (!string.IsNullOrWhiteSpace(redmineComment.Text))
                     {
                         var entity = _mapper.Map<Comment>(redmineComment);
+                        _context.Comments.Add(entity);
+                        await _context.SaveChangesAsync();
+
                         entity.Issue = issue;
-                        _context.Add(entity);
+                        _context.Comments.Update(entity);
+                        await _context.SaveChangesAsync();
+
                     }
                 }
                 else
@@ -83,16 +89,18 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     {
                         _mapper.Map(redmineComment, existingComment);
                         existingComment.Issue = issue;
-                        _context.Update(existingComment);
+                        _context.Comments.Update(existingComment);
                     }
                     else
                     {
-                        _context.Remove(existingComment);
+                        _context.Comments.Remove(existingComment);
                     }
+
+                    await _context.SaveChangesAsync();
                 }
-                await _context.SaveChangesAsync();
+
             }
-            catch
+            catch (Exception ex)
             {
                 throw;
             }

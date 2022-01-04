@@ -12,13 +12,6 @@
         <vm:CommentSearchWindowFormViewModel />
     </UserControl.DataContext>
 
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <conv:InvertableBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
-        </ResourceDictionary>
-    </UserControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

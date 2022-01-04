@@ -8,7 +8,7 @@ using System.Windows.Data;
 namespace Redmine.ManagerWPF.Desktop.Converters
 {
     [ValueConversion(typeof(bool), typeof(Visibility))]
-    public class InvertableBooleanToVisibilityConverter : IValueConverter
+    public class InvertBooleanToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType,
                               object parameter, CultureInfo culture)

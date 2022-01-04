@@ -44,7 +44,7 @@ namespace Redmine.ManagerWPF.Desktop.Extensions
 
         public static IServiceCollection RegisterDbContext(this IServiceCollection services)
         {
-            services.AddDbContext<Context>();
+            services.AddDbContext<Context>(ServiceLifetime.Transient);
 
             return services;
         }

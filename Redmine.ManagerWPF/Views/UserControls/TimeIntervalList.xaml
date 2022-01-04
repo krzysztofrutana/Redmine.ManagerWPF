@@ -15,81 +15,154 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:InvertBooleanToVisibilityConverter x:Key="InvertBooleanToVisibilityConverter" />
             <conv:StringToVIsibilityConverter x:Key="StringToVIsibilityConverter" />
             <conv:DateTimeToVIsibilityConverter x:Key="DateTimeToVIsibilityConverter" />
             <conv:DateTimeToVIsibilityReverseConverter x:Key="DateTimeToVIsibilityReverseConverter" />
+            <BitmapImage x:Key="CalendarIcon" UriSource="/Resources/calendar.png" />
         </ResourceDictionary>
     </UserControl.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid HorizontalAlignment="Stretch">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Start" HorizontalAlignment="Center" FontWeight="Bold" Grid.Column="0" />
-            <TextBlock Text="Czas" HorizontalAlignment="Center" FontWeight="Bold" Grid.Column="1" />
-            <TextBlock Text="Stop" HorizontalAlignment="Center" FontWeight="Bold" Grid.Column="2" />
-            <TextBlock Text="Usuń" HorizontalAlignment="Center" FontWeight="Bold" Grid.Column="3" />
-        </Grid>
         <ListView
-            Grid.Row="1"
+            Grid.Row="0"
+            Margin="0,0,10,0"
             ItemsSource="{Binding TimeIntervalsForNode}"
             VirtualizingPanel.VirtualizationMode="Recycling">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
+                    <Border BorderBrush="Black" BorderThickness="0,0,0,1" Padding="10,10,10,10" x:Name="el" >
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid HorizontalAlignment="Stretch" Grid.Row="0" Grid.Column="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Start" HorizontalAlignment="Center" FontWeight="Bold" Visibility="{Binding StartDate, Converter={StaticResource DateTimeToVIsibilityConverter}}"/>
+                                <Grid Grid.Row="1"  Visibility="{Binding StartDate, Converter={StaticResource DateTimeToVIsibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Grid.Column="0"
+                                        Text="{Binding StartDate, StringFormat='{}{0:dd.MM.yyyy HH:mm}', Mode=TwoWay}"/>
+                                    <ToggleButton Grid.Column="1" 
+                                              Margin="5,0,0,0"
+                                              MinHeight="20" 
+                                              MinWidth="20" 
+                                              MaxHeight="20"
+                                              Command="{Binding Path=DataContext.EditStartDateCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                              CommandParameter="{Binding}">
+                                        <ToggleButton.Style>
+                                            <Style TargetType="{x:Type ToggleButton}">
+                                                <Setter Property="Background" Value="White" />
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                            </Style>
+                                        </ToggleButton.Style>
+                                        <Image  Stretch="Fill"
+                                            Source="{StaticResource CalendarIcon}"
+                                            />
+                                    </ToggleButton>
+                                </Grid>
+                                <Button
                             HorizontalAlignment="Center"
-                            Grid.Column="0"
-                            Visibility="{Binding StartDate, Converter={StaticResource DateTimeToVIsibilityConverter}}"
-                            Text="{Binding StartDate, StringFormat='{}{0:dd.MM.yyyy HH:mm}', Mode=TwoWay}"/>
-                        <Button
-                            HorizontalAlignment="Center"
-                            Grid.Column="0"
+                            Grid.Row="1"
                             Visibility="{Binding StartDate, Converter={StaticResource DateTimeToVIsibilityReverseConverter}}"
                             Content="Start"
                             Command="{Binding Path=DataContext.StartTimeIntervalAsyncCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
                             CommandParameter="{Binding}"/>
-                        <TextBlock
+                            </Grid>
+
+                            <Grid Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" Visibility="{Binding CountedTime, Converter={StaticResource StringToVIsibilityConverter}}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Czas" HorizontalAlignment="Center" FontWeight="Bold" Visibility="{Binding CountedTime, Converter={StaticResource StringToVIsibilityConverter}}"/>
+                                <TextBlock
+                                    Margin="0,0,0,0"
+                                    Grid.Row="1"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Text="{Binding CountedTime, Mode=TwoWay}"/>
+                            </Grid>
+
+                            <Grid Grid.Row="0" Grid.Column="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Stop" HorizontalAlignment="Center" FontWeight="Bold" Visibility="{Binding EndDate, Converter={StaticResource DateTimeToVIsibilityConverter}}"/>
+                                <Grid Grid.Row="1" Visibility="{Binding EndDate, Converter={StaticResource DateTimeToVIsibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            Text="{Binding EndDate,StringFormat='{}{0:dd.MM.yyyy HH:mm}', Mode=TwoWay}"/>
+                                    <ToggleButton Grid.Column="1" 
+                                                  HorizontalAlignment="Center"
+                                              Margin="5,0,0,0"
+                                              MinHeight="20" 
+                                              MinWidth="20" 
+                                              MaxHeight="20"
+                                              Command="{Binding Path=DataContext.EditEndDateCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                              CommandParameter="{Binding}">
+                                        <ToggleButton.Style>
+                                            <Style TargetType="{x:Type ToggleButton}">
+                                                <Setter Property="Background" Value="White" />
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                            </Style>
+                                        </ToggleButton.Style>
+                                        <Image  Stretch="Fill"
+                                            Source="{StaticResource CalendarIcon}"
+                                            />
+                                    </ToggleButton>
+                                </Grid>
+                                <Button Grid.Row="1"
                             HorizontalAlignment="Center"
-                            Grid.Column="1"
-                            Visibility="{Binding CountedTime, Converter={StaticResource StringToVIsibilityConverter}}"
-                            Text="{Binding CountedTime, Mode=TwoWay}"/>
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            Grid.Column="2"
-                            Visibility="{Binding EndDate, Converter={StaticResource DateTimeToVIsibilityConverter}}"
-                            Text="{Binding EndDate,StringFormat='{}{0:dd.MM.yyyy HH:mm}', Mode=TwoWay}"/>
-                        <Button
-                            HorizontalAlignment="Center"
-                            Grid.Column="2"
                             Visibility="{Binding EndDate, Converter={StaticResource DateTimeToVIsibilityReverseConverter}}"
                             Content="Stop"
                             Command="{Binding Path=DataContext.EndTimeIntervalAsyncCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
                             CommandParameter="{Binding}"/>
-                        <Button Grid.Row="0" Grid.Column="3" Margin="10,0,0,0" HorizontalAlignment="Center" Command="{Binding Path=DataContext.RemoveTimeIntervalAsyncCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" CommandParameter="{Binding}" Content="Usuń"/>
-                    </Grid>
+                            </Grid>
+
+
+                            <Button Grid.Row="0" Grid.Column="3" Margin="10,0,10,0" HorizontalAlignment="Right" Command="{Binding Path=DataContext.RemoveTimeIntervalAsyncCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" CommandParameter="{Binding}" Content="Usuń"/>
+                            <Grid Grid.Row="2" Grid.ColumnSpan="4" Margin="10,5,1,10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox MaxWidth="300"  AcceptsReturn="True" HorizontalAlignment="Stretch" TextWrapping="Wrap" Grid.Column="0" Text="{Binding Note, Mode=TwoWay}"/>
+                                <Button Grid.Column="1" Margin="5,0,0,0" Content="Zapisz notatkę" Command="{Binding Path=DataContext.SaveTimeIntervalNoteCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" CommandParameter="{Binding}"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ListView.ItemTemplate>
             <ListView.ItemContainerStyle>
@@ -98,6 +171,6 @@
                 </Style>
             </ListView.ItemContainerStyle>
         </ListView>
-        <Button Grid.Row="2" Margin="0,0,10,0" HorizontalAlignment="Right" Command="{Binding AddTimeIntervalAsyncCommand}" Content="Dodaj czas"/>
+        <Button Grid.Row="1" Margin="0,5,15,0" HorizontalAlignment="Right" Command="{Binding AddTimeIntervalAsyncCommand}" Content="Dodaj czas"/>
     </Grid>
 </UserControl>

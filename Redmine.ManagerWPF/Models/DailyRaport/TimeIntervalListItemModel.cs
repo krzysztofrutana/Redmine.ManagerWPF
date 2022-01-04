@@ -12,6 +12,7 @@ namespace Redmine.ManagerWPF.Desktop.Models.DailyRaport
         public DateTime EndDate { get; set; }
         public string Time { get; set; }
         public string ToComment { get; set; }
+        public string Note { get; set; }
         public string Type { get; set; } = nameof(ObjectType.TimeInterval);
 
     }

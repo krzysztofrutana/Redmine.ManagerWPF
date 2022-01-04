@@ -15,7 +15,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <conv:InvertableBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+            <conv:InvertBooleanToVisibilityConverter x:Key="InvertBooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -53,7 +53,7 @@
             Grid.Column="1"
             Margin="5,0,10,0"
             Text="{Binding IssueFormModel.Status, Mode=TwoWay}" />
-            <Button Command="{Binding SetAsDoneCommand}" Visibility="{Binding IssueFormModel.Done, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">
+            <Button Command="{Binding SetAsDoneCommand}" Visibility="{Binding IssueFormModel.Done, Converter={StaticResource InvertBooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">
                 <TextBlock Text="Wykonane" TextWrapping="Wrap" />
             </Button>
             <Button Command="{Binding SetAsUndoneCommand}" Visibility="{Binding IssueFormModel.Done, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">

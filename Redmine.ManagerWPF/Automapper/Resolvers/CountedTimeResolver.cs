@@ -7,14 +7,14 @@ using System.Text;
 
 namespace Redmine.ManagerWPF.Desktop.Automapper.Resolvers
 {
-    public class CountetTimeResolver : IValueResolver<TimeInterval, ListItemModel, string>
+    public class CountedTimeResolver : IValueResolver<TimeInterval, ListItemModel, string>
     {
         public string Resolve(TimeInterval source, ListItemModel destination, string destMember, ResolutionContext context)
         {
-            if(source.IsEnd)
+            if (source.IsEnd)
             {
                 var totalTime = (source.TimeIntervalEnd.Value - source.TimeIntervalStart.Value);
-                return $"{totalTime.Hours}:{totalTime.Minutes}:{totalTime.Seconds}";
+                return $"{totalTime.Hours.ToString("00")}:{totalTime.Minutes.ToString("00")}:{totalTime.Seconds.ToString("00")}";
             }
             else
             {

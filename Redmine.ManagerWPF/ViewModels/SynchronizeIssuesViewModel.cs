@@ -129,9 +129,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 SetStatus(SynchronizeIssueStatusType.SynchronizeIssues);
                 Value = 0;
                 ProgressBarValue = 0;
-                foreach (var redmineProject in redmineIssues)
+                foreach (var issue in redmineIssues)
                 {
-                    await _issueService.SynchronizeIssues(redmineProject);
+                    await _issueService.SynchronizeIssues(issue);
                     Value++;
                     ProgressBarValue = step * Value;
                 }
@@ -154,6 +154,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 }
 
                 SetStatus(SynchronizeIssueStatusType.AllDone);
+            }
+            catch (ArgumentException)
+            {
+                CancelButtonText = "Kliknij by zamknąć";
+                _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
