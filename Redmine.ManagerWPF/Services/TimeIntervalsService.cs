@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Dapper;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
@@ -13,11 +14,11 @@ namespace Redmine.ManagerWPF.Desktop.Services
 {
     public class TimeIntervalsService : IService
     {
-        private readonly Context _context;
+        private readonly IContext _context;
         private readonly IssueService _issueService;
         private readonly CommentService _commentService;
 
-        public TimeIntervalsService(Context context, IssueService issueService, CommentService commentService)
+        public TimeIntervalsService(IContext context, IssueService issueService, CommentService commentService)
         {
             _context = context;
             _issueService = issueService;
@@ -26,6 +27,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task CreateAsync(TreeModel treeModel, DateTime start, DateTime end)
         {
+            using var context = await _context.GetConnectionAsync();
             if (treeModel.Type == nameof(Issue))
             {
                 var issue = await _issueService.GetIssueWithTimeIntervalAsync(treeModel.Id);
@@ -35,8 +37,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     newTimeInterval.TimeIntervalStart = start;
                     newTimeInterval.TimeIntervalEnd = end;
                     issue.TimesForIssue.Add(newTimeInterval);
-                    _context.Update(issue);
-                    await _context.SaveChangesAsync();
+                    await context.UpdateAsync(issue);
                 }
 
             }
@@ -49,41 +50,54 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     newTimeInterval.TimeIntervalStart = start;
                     newTimeInterval.TimeIntervalEnd = end;
                     comment.TimeForComment.Add(newTimeInterval);
-                    _context.Update(comment);
-                    await _context.SaveChangesAsync();
+                    await context.UpdateAsync(comment);
                 }
             }
         }
 
-        public Task<List<TimeInterval>> GetTimeIntervalsForIssueAsync(int issueId)
+        public async Task<List<TimeInterval>> GetTimeIntervalsForIssueAsync(int issueId)
         {
-            return _context.TimeIntervals.Where(x => x.Issue.Id == issueId).ToListAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            var comments = await context.GetListAsync<TimeInterval>(new { IssueId = issueId });
+
+            return comments.ToList();
         }
 
-        public Task<List<TimeInterval>> GetTimeIntervalsForCommentAsync(int commentId)
+        public async Task<List<TimeInterval>> GetTimeIntervalsForCommentAsync(int commentId)
         {
-            return _context.TimeIntervals.Where(x => x.Comment.Id == commentId).ToListAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            var comments = await context.GetListAsync<TimeInterval>(new { CommentId = commentId });
+
+            return comments.ToList();
         }
 
-        public Task<TimeInterval> GetTimeIntervalAsync(long id)
+        public async Task<TimeInterval> GetTimeIntervalAsync(long id)
         {
-            return _context.TimeIntervals.Where(x => x.Id == id).SingleOrDefaultAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            return await context.GetAsync<TimeInterval>(id);
         }
 
         public async Task DeleteAsync(TimeInterval timeInterval)
         {
-            _context.Remove(timeInterval);
-            await _context.SaveChangesAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            await context.DeleteAsync(timeInterval);
         }
 
         public async Task UpdateAsync(TimeInterval timeInterval)
         {
-            _context.Update(timeInterval);
-            await _context.SaveChangesAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            await context.UpdateAsync(timeInterval);
         }
 
         public async Task<TimeInterval> CreateEmptyAsync(int objectId, ObjectType type)
         {
+            using var context = await _context.GetConnectionAsync();
+
             if (type == ObjectType.Issue)
             {
                 var issue = await _issueService.GetIssueAsync(objectId);
@@ -91,8 +105,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var timeInterval = new TimeInterval();
                     timeInterval.Issue = issue;
-                    _context.TimeIntervals.Add(timeInterval);
-                    await _context.SaveChangesAsync();
+                    await context.InsertAsync(timeInterval);
 
                     return timeInterval;
                 }
@@ -105,8 +118,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var timeInterval = new TimeInterval();
                     timeInterval.Comment = comment;
-                    _context.TimeIntervals.Add(timeInterval);
-                    await _context.SaveChangesAsync();
+                    await context.InsertAsync(timeInterval);
 
                     return timeInterval;
                 }
@@ -117,26 +129,58 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public bool CheckIfAnyStartedTimeIntervalExist()
         {
-            return _context.TimeIntervals.Any(x => x.TimeIntervalStart.HasValue && !x.TimeIntervalEnd.HasValue);
+            using var context = _context.GetConnection();
 
+            var comments = context.GetList<TimeInterval>("WHERE [TimeIntervalStart] IS NOT NULL AND [TimeIntervalEnd] IS NULL", new { });
+
+            return comments.Any();
         }
 
         public async Task<bool> CheckIfAnyStartedTimeIntervalExistAsync()
         {
-            return await _context.TimeIntervals.AnyAsync(x => x.TimeIntervalStart.HasValue && !x.TimeIntervalEnd.HasValue);
+            using var context = await _context.GetConnectionAsync();
 
+            var comments = await context.GetListAsync<TimeInterval>("WHERE TimeIntervalStart IS NOT NULL AND TimeIntervalEnd IS NULL", new { });
+
+            return comments.Any();
         }
 
-        public Task<List<TimeInterval>> GetFinishedForCurrentDateAsync(DateTime date)
+        public async Task<List<TimeInterval>> GetFinishedForCurrentDateAsync(DateTime date)
         {
-            return _context.TimeIntervals
-            .Include(x => x.Issue)
-                .ThenInclude(x => x.Project)
-            .Include(x => x.Comment)
-                .ThenInclude(x => x.Issue)
-                    .ThenInclude(x => x.Project)
-            .Where(x => x.TimeIntervalStart.HasValue && x.TimeIntervalStart.Value.Date == date.Date && x.TimeIntervalEnd.HasValue && x.TimeIntervalEnd.Value.Date == date.Date)
-            .ToListAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            DateTime fromDate = date.Date;
+            DateTime toDate = date.Date.AddDays(1);
+
+            var query = @"SELECT * FROM [dbo].[TimeIntervals] timeIntervals
+                          LEFT JOIN [dbo].[Issues] issues ON timeIntervals.IssueId = issues.Id
+						  LEFT JOIN [dbo].[Comments] comments ON timeIntervals.CommentId = comments.Id
+                          LEFT JOIN [dbo].[Issues] commentIssues ON comments.IssueId = commentIssues.Id
+                          LEFT JOIN [dbo].[Projects] projects ON commentIssues.ProjectId = projects.Id OR issues.ProjectId = projects.Id
+                          WHERE timeIntervals.[TimeIntervalStart] >= @fromDate AND timeIntervals.[TimeIntervalStart] < @toDate AND timeIntervals.[TimeIntervalEnd] >= @fromDate AND timeIntervals.[TimeIntervalEnd] < @toDate";
+
+            var timeIntervals = await context.QueryAsync<TimeInterval, Issue, Comment, Issue, Project, TimeInterval>(query, (timeInterval, issue, comment, commentIssue, project) =>
+            {
+                timeInterval.Issue = issue;
+                timeInterval.Comment = comment;
+                if (timeInterval.Issue != null)
+                {
+                    timeInterval.Issue.Project = project;
+                }
+
+                if (timeInterval.Comment != null)
+                {
+                    timeInterval.Comment.Issue = commentIssue;
+                    if (commentIssue != null)
+                    {
+                        timeInterval.Comment.Issue.Project = project;
+                    }
+                }
+                return timeInterval;
+            },
+             new { fromDate = fromDate, toDate = toDate });
+
+            return timeIntervals.ToList();
         }
     }
 }

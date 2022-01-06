@@ -1,11 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.EntityFrameworkCore;
+using Dapper;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Dapper;
+using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Models.Settings;
 using Redmine.ManagerWPF.Helpers;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -59,11 +63,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand ConnectionTestCommand { get; }
         public IRelayCommand CreateDatabaseCommand { get; }
 
-        private readonly Context _context;
+        private readonly IContext _context;
 
         public SettingsViewModel()
         {
-            _context = Ioc.Default.GetRequiredService<Context>();
+            _context = Ioc.Default.GetRequiredService<IContext>();
 
             CurrentSettings = new SettingsModel();
             LoadCurrentSettings();
@@ -72,44 +76,53 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             CreateDatabaseCommand = new RelayCommand(CreateDatabase);
         }
 
-        private void ConnectionTest()
+        private async void ConnectionTest()
         {
             SaveSettings();
-            if (_context.Database.CanConnect())
+
+            using var context = await _context.GetConnectionAsync();
+
+            try
             {
-                ConnectionStatusText = "Połączono";
-                Connected = true;
+                var projects = await context.GetListAsync<Project>(new { });
+
+                if (projects != null && projects.Count() >= 0)
+                {
+                    ConnectionStatusText = "Błąd, spróbuj ponownie";
+                    Connected = false;
+                }
             }
-            else
+            catch
             {
                 ConnectionStatusText = "Błąd, spróbuj ponownie";
                 Connected = false;
             }
+
         }
 
         private void CreateDatabase()
         {
             SaveSettings();
-            if (!_context.Database.CanConnect())
-            {
-                try
-                {
-                    _context.Database.Migrate();
-                    _context.Database.EnsureCreated();
-                    ConnectionStatusText = "Połączono";
-                    Connected = true;
-                }
-                catch
-                {
-                    ConnectionStatusText = "Błąd, tworzenia bazy";
-                    Connected = false;
-                }
-            }
-            else
-            {
-                ConnectionStatusText = "Baza danych już istnieje";
-                Connected = true;
-            }
+            //if (!_context.Database.CanConnect())
+            //{
+            //    try
+            //    {
+            //        _context.Database.Migrate();
+            //        _context.Database.EnsureCreated();
+            //        ConnectionStatusText = "Połączono";
+            //        Connected = true;
+            //    }
+            //    catch
+            //    {
+            //        ConnectionStatusText = "Błąd, tworzenia bazy";
+            //        Connected = false;
+            //    }
+            //}
+            //else
+            //{
+            //    ConnectionStatusText = "Baza danych już istnieje";
+            //    Connected = true;
+            //}
         }
 
         private void LoadCurrentSettings()
@@ -145,8 +158,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
 
             SettingsHelper.Save();
-
-            _context.Database.GetDbConnection().ConnectionString = String.Format(@"Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", CurrentSettings.ServerName, CurrentSettings.DatabaseName);
         }
     }
 }

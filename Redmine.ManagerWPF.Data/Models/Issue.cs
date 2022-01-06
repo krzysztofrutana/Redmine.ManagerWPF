@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Dapper;
+using System.Collections.Generic;
 
 namespace Redmine.ManagerWPF.Data.Models
 {
+    [Table("Issues")]
     public class Issue
     {
+        [Key]
         public int Id { get; set; }
         public int SourceId { get; set; }
         public string Name { get; set; }

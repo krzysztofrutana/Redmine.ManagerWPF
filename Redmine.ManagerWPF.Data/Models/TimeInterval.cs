@@ -1,10 +1,12 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using Dapper;
+using System;
 
 namespace Redmine.ManagerWPF.Data.Models
 {
+    [Table("TimeIntervals")]
     public class TimeInterval
     {
+        [Key]
         public int Id { get; set; }
         public DateTime? TimeIntervalStart { get; set; }
         public DateTime? TimeIntervalEnd { get; set; }
@@ -13,12 +15,13 @@ namespace Redmine.ManagerWPF.Data.Models
         public string Note { get; set; }
 
         [NotMapped]
-        public bool IsStarted { 
+        public bool IsStarted
+        {
             get
             {
                 return TimeIntervalStart.HasValue && !TimeIntervalEnd.HasValue;
             }
-            set { } 
+            set { }
         }
 
         [NotMapped]

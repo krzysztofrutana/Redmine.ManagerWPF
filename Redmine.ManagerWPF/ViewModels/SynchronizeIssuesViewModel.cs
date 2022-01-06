@@ -138,10 +138,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 SetStatus(SynchronizeIssueStatusType.BuildTree);
                 var allIssues = await _issueService.GetAllIssueAsync();
-                TotalIssuesCount = allIssues.Count.ToString();
+                TotalIssuesCount = allIssues.Count().ToString();
                 Value = 0;
                 ProgressBarValue = 0;
-                step = fullBarValue / allIssues.Count;
+                step = fullBarValue / allIssues.Count();
                 foreach (var issue in allIssues)
                 {
                     var redmineIssue = redmineIssues.FirstOrDefault(x => x.Id == issue.SourceId);

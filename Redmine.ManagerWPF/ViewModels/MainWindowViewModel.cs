@@ -307,7 +307,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                             await _timeIntervalsService.DeleteAsync(timeInterval);
                         }
 
-                        var issue = _issueService.GetIssue(SelectedNode.Id);
+                        var issue = await _issueService.GetIssueAsync(SelectedNode.Id);
                         if (issue != null)
                         {
                             await _issueService.Delete(issue);

@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Generic;
 
 namespace Redmine.ManagerWPF.Data.Models
 {
+    [Table("Comments")]
     public class Comment
     {
+        [Key]
         public int Id { get; set; }
         public int SourceId { get; set; }
         public string Text { get; set; }

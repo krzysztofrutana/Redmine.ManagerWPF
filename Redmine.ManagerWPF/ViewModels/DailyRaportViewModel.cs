@@ -69,27 +69,31 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                     var timeIntervalForToday = await _timeIntervalsService.GetFinishedForCurrentDateAsync(Date);
 
-                    var groupTimeIntervalForIssuesByProject = timeIntervalForToday.Where(x => x.Issue != null && x.Comment == null).GroupBy(x => x.Issue.Project);
-                    var groupTimeIntervalForCommentByProject = timeIntervalForToday.Where(x => x.Issue == null && x.Comment != null).GroupBy(x => x.Comment.Issue.Project);
+                    var groupTimeIntervalForIssuesByProject = timeIntervalForToday.Where(x => x.Issue != null && x.Comment == null).GroupBy(x => x.Issue.Project.Id);
+                    var groupTimeIntervalForCommentByProject = timeIntervalForToday.Where(x => x.Issue == null && x.Comment != null).GroupBy(x => x.Comment.Issue.Project.Id);
                     foreach (var projectGroup in groupTimeIntervalForIssuesByProject)
                     {
-                        var timeIntervalsFromCommentsForProject = groupTimeIntervalForCommentByProject.Where(x => x.Key.Id == projectGroup.Key.Id).FirstOrDefault();
+                        var timeIntervalsFromCommentsForProject = groupTimeIntervalForCommentByProject.Where(x => x.Key == projectGroup.Key).FirstOrDefault();
 
                         var projectToAdd = new ProjectListItemModel();
 
+                        var project = projectGroup.FirstOrDefault().Issue.Project;
+
                         projectToAdd.TotalTimeTimeSpan = new TimeSpan();
 
-                        projectToAdd.Name = projectGroup.Key.Name;
-                        projectToAdd.ProjectId = projectGroup.Key.Id;
+                        projectToAdd.Name = project.Name;
+                        projectToAdd.ProjectId = projectGroup.Key;
                         projectToAdd.Childrens = new List<IssueListItemModel>();
 
-                        var groupByIssue = projectGroup.GroupBy(x => x.Issue);
+                        var groupByIssue = projectGroup.GroupBy(x => x.Issue.Id);
 
                         foreach (var issueGroup in groupByIssue)
                         {
+                            var issue = issueGroup.First().Issue;
+
                             var issueToAdd = new IssueListItemModel();
-                            issueToAdd.Name = issueGroup.Key.Name;
-                            issueToAdd.IssueId = issueGroup.Key.Id;
+                            issueToAdd.Name = issue.Name;
+                            issueToAdd.IssueId = issueGroup.Key;
 
                             issueToAdd.TotalTimeTimeSpan = new TimeSpan();
 
@@ -105,11 +109,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                             if (timeIntervalsFromCommentsForProject != null)
                             {
-                                var fromCommentGroupByIssue = timeIntervalsFromCommentsForProject.GroupBy(x => x.Comment.Issue);
+                                var fromCommentGroupByIssue = timeIntervalsFromCommentsForProject.GroupBy(x => x.Comment.Issue.Id);
 
                                 foreach (var issueGroupFromComment in fromCommentGroupByIssue)
                                 {
-                                    if (issueGroupFromComment.Key.Id == issueGroup.Key.Id)
+                                    if (issueGroupFromComment.Key == issueGroup.Key)
                                     {
                                         foreach (var timeIntervalForComment in issueGroupFromComment)
                                         {
@@ -132,15 +136,17 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                         {
                             var existingsIssuesIds = projectToAdd.Childrens.Select(x => x.IssueId).ToList();
 
-                            var groupAllByIssue = timeIntervalsFromCommentsForProject.GroupBy(x => x.Comment.Issue);
+                            var groupAllByIssue = timeIntervalsFromCommentsForProject.GroupBy(x => x.Comment.Issue.Id);
 
-                            var filteredIssues = groupAllByIssue.Where(x => !existingsIssuesIds.Contains(x.Key.Id));
+                            var filteredIssues = groupAllByIssue.Where(x => !existingsIssuesIds.Contains(x.Key));
 
                             foreach (var issueGroup in filteredIssues)
                             {
+                                var issue = issueGroup.First().Comment.Issue;
+
                                 var issueToAdd = new IssueListItemModel();
-                                issueToAdd.Name = issueGroup.Key.Name;
-                                issueToAdd.IssueId = issueGroup.Key.Id;
+                                issueToAdd.Name = issue.Name;
+                                issueToAdd.IssueId = issueGroup.Key;
 
                                 issueToAdd.TotalTimeTimeSpan = new TimeSpan();
 
@@ -167,19 +173,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                         RaportData.Add(projectToAdd);
                     }
 
-                    var noAddedProjects = groupTimeIntervalForCommentByProject.Where(x => !RaportData.Select(x => x.ProjectId).Contains(x.Key.Id)).ToList();
+                    var noAddedProjects = groupTimeIntervalForCommentByProject.Where(x => !RaportData.Select(x => x.ProjectId).Contains(x.Key)).ToList();
 
                     foreach (var projectGroup in noAddedProjects)
                     {
                         var projectToAdd = new ProjectListItemModel();
 
+                        var project = projectGroup.FirstOrDefault().Comment.Issue.Project;
+
                         projectToAdd.TotalTimeTimeSpan = new TimeSpan();
 
-                        projectToAdd.Name = projectGroup.Key.Name;
-                        projectToAdd.ProjectId = projectGroup.Key.Id;
+                        projectToAdd.Name = project.Name;
+                        projectToAdd.ProjectId = projectGroup.Key;
                         projectToAdd.Childrens = new List<IssueListItemModel>();
 
-                        var groupByIssue = projectGroup.GroupBy(x => x.Comment.Issue);
+                        var groupByIssue = projectGroup.GroupBy(x => x.Comment.Issue.Id);
 
                         foreach (var issueGroup in groupByIssue)
                         {
@@ -250,11 +258,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             return (timeIntervalToAdd, timeDifference);
         }
 
-        public IssueListItemModel PrepareIssue(IGrouping<Issue, TimeInterval> issueGroup)
+        public IssueListItemModel PrepareIssue(IGrouping<int, TimeInterval> issueGroup)
         {
+            var issue = issueGroup.First().Comment.Issue;
             var issueToAdd = new IssueListItemModel();
-            issueToAdd.Name = issueGroup.Key.Name;
-            issueToAdd.IssueId = issueGroup.Key.Id;
+            issueToAdd.Name = issue.Name;
+            issueToAdd.IssueId = issueGroup.Key;
 
             issueToAdd.TotalTimeTimeSpan = new TimeSpan();
 

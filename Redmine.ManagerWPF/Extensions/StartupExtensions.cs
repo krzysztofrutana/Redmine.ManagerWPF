@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
@@ -44,7 +44,7 @@ namespace Redmine.ManagerWPF.Desktop.Extensions
 
         public static IServiceCollection RegisterDbContext(this IServiceCollection services)
         {
-            services.AddDbContext<Context>(ServiceLifetime.Transient);
+            services.AddSingleton<IContext, Context>();
 
             return services;
         }

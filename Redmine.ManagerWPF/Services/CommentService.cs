@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+using Dapper;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Data.Models;
 using System;
 using System.Collections.Generic;
@@ -12,75 +13,99 @@ namespace Redmine.ManagerWPF.Desktop.Services
 {
     public class CommentService : IService
     {
-        private readonly Context _context;
+        private readonly IContext _context;
         private readonly IMapper _mapper;
 
-        public CommentService(Context context, IMapper mapper)
+        public CommentService(IContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
         }
 
-        public Task<Comment> GetCommentAsync(int id)
+        public async Task<Comment> GetCommentAsync(int id)
         {
-            return _context.Comments.FirstOrDefaultAsync(x => x.Id == id);
+            using var context = await _context.GetConnectionAsync();
+
+            return context.Get<Comment>(id);
         }
 
-        public Task<Comment> GetCommentWithTimeIntervalAsync(int id)
+        public async Task<Comment> GetCommentWithTimeIntervalAsync(int id)
         {
-            return _context.Comments
-            .Include(x => x.TimeForComment)
-            .SingleOrDefaultAsync(x => x.Id == id);
+            using var context = await _context.GetConnectionAsync();
+
+            var comment = await context.GetAsync<Comment>(id);
+
+            if (comment != null)
+            {
+                var timeIntervals = await context.GetListAsync<TimeInterval>(new { CommentId = id });
+                comment.TimeForComment = timeIntervals.ToList();
+            }
+
+            return comment;
         }
 
-        public Task<List<Comment>> GetCommentByIssueIdAsync(long issueId)
+        public async Task<List<Comment>> GetCommentByIssueIdAsync(long issueId)
         {
-            return _context.Comments
-            .Where(x => x.Issue.Id == issueId)
-            .ToListAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            var comments = await context.GetListAsync<Comment>(new { IssueId = issueId });
+
+            return comments.ToList();
         }
 
-        public Task<List<Comment>> GetCommentByIssuesIdsAsync(List<int> issuesIds)
+        public async Task<List<Comment>> GetCommentByIssuesIdsAsync(List<int> issuesIds)
         {
-            return _context.Comments
-            .Include(x => x.Issue)
-            .Where(x => issuesIds.Contains(x.Issue.Id))
-            .ToListAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            var query = @"SELECT comments.*, issues.* FROM [dbo].[Comments] comments
+                          INNER JOIN issues ON comments.IssueId = issues.Id
+                          WHERE comments.IssueId IN @ids";
+            var comments = await context.QueryAsync<Comment, Issue, Comment>(query, (comment, issue) =>
+            {
+                comment.Issue = issue;
+                return comment;
+            },
+            new { ids = issuesIds });
+
+            return comments.ToList();
         }
 
-        public Task<List<Comment>> GetCommentByIssuesIdsWithPhraseAsync(List<int> issuesIds, string searchPhrase)
+        public async Task<List<Comment>> GetCommentByIssuesIdsWithPhraseAsync(List<int> issuesIds, string searchPhrase)
         {
-            return _context.Comments
-            .AsNoTracking()
-            .Include(x => x.Issue)
-            .Where(x => issuesIds.Contains(x.Issue.Id) && x.Text.Contains(searchPhrase))
-            .ToListAsync();
+
+            using var context = await _context.GetConnectionAsync();
+
+            var comments = await context.GetListAsync<Comment>("WHERE IssueId IN @ids AND Text LIKE '%" + searchPhrase + "%'", new { ids = issuesIds });
+
+            return comments.ToList();
         }
 
         public async Task Update(Comment entity)
         {
-            _context.Update(entity);
-            await _context.SaveChangesAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            var comments = await context.UpdateAsync(entity);
         }
 
         public async Task SynchronizeCommentAsync(Integration.Models.JournalDto redmineComment, Issue issue)
         {
             try
             {
-                var existingComment = await _context.Comments.FirstOrDefaultAsync(x => x.SourceId == redmineComment.Id);
+                using var context = await _context.GetConnectionAsync();
+
+                var query = @"SELECT * FROM [dbo].[Comments] WHERE SourceId = @id";
+
+                var existingComment = await context.QueryFirstOrDefaultAsync<Comment>(query, new { id = redmineComment.Id });
 
                 if (existingComment == null)
                 {
                     if (!string.IsNullOrWhiteSpace(redmineComment.Text))
                     {
                         var entity = _mapper.Map<Comment>(redmineComment);
-                        _context.Comments.Add(entity);
-                        await _context.SaveChangesAsync();
+                        await context.InsertAsync(entity);
 
                         entity.Issue = issue;
-                        _context.Comments.Update(entity);
-                        await _context.SaveChangesAsync();
-
+                        await context.UpdateAsync(entity);
                     }
                 }
                 else
@@ -89,16 +114,13 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     {
                         _mapper.Map(redmineComment, existingComment);
                         existingComment.Issue = issue;
-                        _context.Comments.Update(existingComment);
+                        await context.UpdateAsync(existingComment);
                     }
                     else
                     {
-                        _context.Comments.Remove(existingComment);
+                        await context.DeleteAsync(existingComment);
                     }
-
-                    await _context.SaveChangesAsync();
                 }
-
             }
             catch (Exception ex)
             {

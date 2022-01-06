@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+using Dapper;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Data.Models;
 using System;
 using System.Collections.Generic;
@@ -12,13 +13,13 @@ namespace Redmine.ManagerWPF.Desktop.Services
 {
     public class IssueService : IService
     {
-        private readonly Context _context;
+        private readonly IContext _context;
         private readonly IMapper _mapper;
         private readonly CommentService _commentService;
         private readonly ProjectService _projectService;
 
         public IssueService(
-            Context context,
+            IContext context,
             IMapper mapper,
             CommentService commentService,
             ProjectService projectService)
@@ -31,18 +32,27 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task<List<Issue>> GetIssuesByProjectIdAsync(long projectId)
         {
-            var issues = await _context.Issues.Where(x => x.Project.Id == projectId).ToListAsync();
+            using var context = await _context.GetConnectionAsync();
 
-            foreach (var issue in issues)
+            var query = @"SELECT * FROM [dbo].[Issues] issues
+                          LEFT JOIN [dbo].[Issues] mainTasks ON issues.MainTaskId = mainTasks.Id
+                          WHERE issues.ProjectId = @projectId";
+
+            var issues = await context.QueryAsync<Issue, Issue, Issue>(query, (issue, mainTask) =>
             {
-                await _context.Entry<Issue>(issue).ReloadAsync();
-            }
+                if (mainTask != null)
+                {
+                    issue.MainTask = mainTask;
+                }
+                return issue;
+            },
+            new { projectId = projectId });
 
-            issues = await GetCommentForIssues(issues);
+            issues = await GetCommentForIssues(issues.ToList());
 
             var mainIssues = issues.Where(x => x.MainTask == null).OrderBy(x => x.Name).ToList();
 
-            CreateTree(mainIssues, issues);
+            CreateTree(mainIssues, issues.ToList());
 
             return mainIssues;
         }
@@ -77,40 +87,52 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return issues;
         }
 
-        public Task<Issue> GetIssueAsync(int id)
+        public async Task<Issue> GetIssueAsync(int id)
         {
-            return _context.Issues.Where(X => X.Id == id).SingleOrDefaultAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            return await context.GetAsync<Issue>(id);
         }
 
-        public Issue GetIssue(int id)
+
+        public async Task<Issue> GetIssueWithTimeIntervalAsync(int id)
         {
-            return _context.Issues.Where(X => X.Id == id).SingleOrDefault();
+            using var context = await _context.GetConnectionAsync();
+
+            var issue = await context.GetAsync<Issue>(id);
+
+            if (issue != null)
+            {
+                var timeIntervals = await context.GetListAsync<TimeInterval>(new { IssueId = id });
+                issue.TimesForIssue = timeIntervals.ToList();
+            }
+
+            return issue;
         }
 
-        public Task<Issue> GetIssueWithTimeIntervalAsync(int id)
+        public async Task<IEnumerable<Issue>> GetAllIssueAsync()
         {
-            return _context.Issues
-            .Include(x => x.TimesForIssue)
-            .Where(X => X.Id == id)
-            .SingleOrDefaultAsync();
-        }
+            using var context = await _context.GetConnectionAsync();
 
-        public Task<List<Issue>> GetAllIssueAsync()
-        {
-            return _context.Issues.ToListAsync();
+            return await context.GetListAsync<Issue>();
         }
 
         public async Task Update(Issue entity)
         {
-            _context.Update(entity);
-            await _context.SaveChangesAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            await context.UpdateAsync(entity);
         }
 
         public async Task SynchronizeIssues(Integration.Models.IssueDto redmineIssue)
         {
             try
             {
-                var existingIssue = await _context.Issues.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.Id);
+                using var context = await _context.GetConnectionAsync();
+
+                var query = @"SELECT * FROM [dbo].[Issues] WHERE SourceId = @id";
+
+                var existingIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.Id });
 
                 Issue addedOrUpdatedIssue = null;
 
@@ -122,23 +144,17 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     if (project != null)
                     {
                         entity.Status = Data.Enums.StatusType.New.ToString();
-                        await _context.Issues.AddAsync(entity);
-                        await _context.SaveChangesAsync();
+                        await context.InsertAsync(entity);
 
-                        if (await _context.Issues.AnyAsync(x => x.SourceId == redmineIssue.ParentIssueId))
+                        var checkMainIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.ParentIssueId });
+                        if (checkMainIssue != null)
                         {
-                            var parentIssue = await _context.Issues.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ParentIssueId);
-                            if (parentIssue != null)
-                            {
-                                entity.MainTask = parentIssue;
-                            }
+                            entity.MainTask = checkMainIssue;
 
-                            _context.Issues.Update(entity);
-                            await _context.SaveChangesAsync();
                         }
+
                         entity.Project = project;
-                        _context.Issues.Update(entity);
-                        await _context.SaveChangesAsync();
+                        await context.UpdateAsync(entity);
 
                         addedOrUpdatedIssue = entity;
                     }
@@ -150,8 +166,9 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     {
                         _mapper.Map(redmineIssue, existingIssue);
                         existingIssue.Project = project;
-                        _context.Issues.Update(existingIssue);
-                        await _context.SaveChangesAsync();
+
+                        await context.UpdateAsync(existingIssue);
+
                         addedOrUpdatedIssue = existingIssue;
                     }
                 }
@@ -172,14 +189,16 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task UpdateTreeStructure(Integration.Models.IssueDto redmineIssue, Issue issue)
         {
-            var parentIssue = await _context.Issues.FirstOrDefaultAsync(x => x.SourceId == redmineIssue.ParentIssueId);
+            using var context = await _context.GetConnectionAsync();
+
+            var query = @"SELECT * FROM [dbo].[Issues] WHERE SourceId = @id";
+
+            var parentIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.ParentIssueId });
             if (parentIssue != null)
             {
                 issue.MainTask = parentIssue;
-                _context.Update(issue);
+                await context.UpdateAsync(issue);
             }
-
-            await _context.SaveChangesAsync();
         }
 
         public async Task<Issue> Create(Issue issue)
@@ -189,33 +208,73 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 throw new ArgumentNullException(nameof(issue));
             }
 
-            await _context.AddAsync(issue);
-            await _context.SaveChangesAsync();
+            using var context = await _context.GetConnectionAsync();
+
+            await context.InsertAsync(issue);
 
             return issue;
         }
 
         public async Task Delete(Issue issue)
         {
-            _context.Remove(issue);
-            await _context.SaveChangesAsync();
+            using var context = await _context.GetConnectionAsync();
+            await context.DeleteAsync(issue);
         }
 
         public async Task<List<Issue>> SearchInIssuesAndComments(string searchPhrase, long projectId)
         {
-            var issues = await _context.Issues
-                .AsNoTracking()
-                .Where(x => x.Project.Id == projectId)
-                .Where(x => x.Name.Contains(searchPhrase) || x.Description.Contains(searchPhrase)
-                            || x.Comments.Any(s => s.Text.Contains(searchPhrase)))
-                .ToListAsync();
+            using var context = await _context.GetConnectionAsync();
 
-            issues = await GetCommentEWithPhreaseForIssues(issues, searchPhrase);
+            var query = @$"SELECT * FROM [dbo].[Issues] issues 
+                          LEFT JOIN [dbo].[Comments] comments ON comments.[IssueId] = issues.[Id] AND comments.[Text] LIKE '%{searchPhrase}%'
+                          WHERE [ProjectId] = @projectId AND ([Name] LIKE '%{searchPhrase}%' OR [Description] LIKE '%{searchPhrase}%' OR comments.[Text] LIKE '%{searchPhrase}%')";
 
-            return issues;
+            var issues = await context.QueryAsync<Issue, Comment, Issue>(query, (issue, comment) =>
+                {
+                    if (comment != null)
+                    {
+                        if (issue.Comments == null)
+                        {
+                            issue.Comments = new List<Comment>();
+                            issue.Comments.Add(comment);
+                        }
+                        if (issue.Comments != null && !issue.Comments.Any(s => s.Id == comment.Id))
+                        {
+                            issue.Comments.Add(comment);
+                        }
+                    }
+
+                    return issue;
+                },
+                new { projectId = projectId });
+
+            var groupedIssues = issues.GroupBy(x => x.Id);
+
+            List<Issue> result = new List<Issue>();
+
+            foreach (var group in groupedIssues)
+            {
+                var issue = group.First();
+
+                var comments = issues.Where(x => x.Id == group.Key && x.Comments != null).SelectMany(x => x.Comments);
+                if (comments != null && comments.Any())
+                {
+                    if (issue.Comments == null)
+                    {
+                        issue.Comments = new List<Comment>();
+                    }
+
+                    issue.Comments = comments.ToList();
+                }
+
+
+                result.Add(issue);
+            }
+
+            return result.ToList();
         }
 
-        private async Task<List<Issue>> GetCommentEWithPhreaseForIssues(List<Issue> issues, string searchPhrase)
+        private async Task<List<Issue>> GetCommentWithPhreaseForIssues(List<Issue> issues, string searchPhrase)
         {
             var issuesIds = issues.Select(x => x.Id).ToList();
             var comments = await _commentService.GetCommentByIssuesIdsWithPhraseAsync(issuesIds, searchPhrase);

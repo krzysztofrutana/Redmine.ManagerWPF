@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+using Dapper;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
+using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Data.Models;
 using System;
 using System.Collections.Generic;
@@ -12,49 +13,55 @@ namespace Redmine.ManagerWPF.Desktop.Services
 {
     public class ProjectService : IService
     {
-        private readonly Context _context;
+        private readonly IContext _context;
         private readonly IMapper _mapper;
 
-        public ProjectService(Context context, IMapper mapper)
+        public ProjectService(IContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
         }
 
-        public Task<List<Project>> GetProjectsAsync()
+        public async Task<IEnumerable<Project>> GetProjectsAsync()
         {
-            return _context.Projects.AsNoTracking().ToListAsync();
+            using var context = await _context.GetConnectionAsync();
+            return await context.GetListAsync<Project>();
         }
 
-        public Task<Project> GetProjectAsync(int id)
+        public async Task<Project> GetProjectAsync(int id)
         {
-            return _context.Projects.Where(x => x.Id == id).FirstOrDefaultAsync();
+            using var context = await _context.GetConnectionAsync();
+            return await context.GetAsync<Project>(id);
         }
 
         public async Task SynchronizeProjects(Integration.Models.ProjectDto redmineProject)
         {
-            var redmineProjectIds = redmineProject.Id;
+            using var context = await _context.GetConnectionAsync();
 
-            var existingProject = await _context.Projects.FirstOrDefaultAsync(x => x.SourceId == redmineProjectIds);
+            var query = @"SELECT * FROM [dbo].[Projects] WHERE SourceId = @id";
+
+            var existingProject = await context.QueryFirstOrDefaultAsync<Project>(query, new { id = redmineProject.Id });
 
             if (existingProject == null)
             {
                 var entity = _mapper.Map<Project>(redmineProject);
                 entity.Status = Data.Enums.StatusType.New.ToString();
-                _context.Add(entity);
+                await context.InsertAsync(entity);
             }
             else
             {
                 _mapper.Map(redmineProject, existingProject);
-                _context.Update(existingProject);
+                await context.UpdateAsync(existingProject);
             }
-
-            await _context.SaveChangesAsync();
         }
 
-        public Task<Project> GetProjectBySourceIdAsync(int projectSourceId)
+        public async Task<Project> GetProjectBySourceIdAsync(int projectSourceId)
         {
-            return _context.Projects.FirstOrDefaultAsync(x => x.SourceId == projectSourceId);
+            using var context = await _context.GetConnectionAsync();
+
+            var query = @"SELECT * FROM [dbo].[Projects] WHERE SourceId = @id";
+
+            return await context.QueryFirstOrDefaultAsync<Project>(query, new { id = projectSourceId });
         }
     }
 }
