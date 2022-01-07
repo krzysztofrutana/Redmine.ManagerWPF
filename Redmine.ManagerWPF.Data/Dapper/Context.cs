@@ -42,5 +42,38 @@ namespace Redmine.ManagerWPF.Data.Dapper
             return sqlConnection;
         }
 
+        public async Task<SqlConnection> GetConnectionAsync(string server, string dbName)
+        {
+            var connectionString = "";
+
+            if (!string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(dbName))
+            {
+                connectionString = $"Server={server};Database={dbName};Trusted_Connection=True;";
+            }
+
+            SqlConnection sqlConnection = new SqlConnection(connectionString);
+
+            await sqlConnection.OpenAsync();
+
+            return sqlConnection;
+        }
+
+        public async Task<SqlConnection> GetMasterConnectionAsync()
+        {
+            var connectionString = "";
+            var server = SettingsHelper.GetServerName();
+
+            if (!string.IsNullOrWhiteSpace(server))
+            {
+                connectionString = $"Server={server};Database=master;Trusted_Connection=True;";
+            }
+
+            SqlConnection sqlConnection = new SqlConnection(connectionString);
+
+            await sqlConnection.OpenAsync();
+
+            return sqlConnection;
+        }
+
     }
 }

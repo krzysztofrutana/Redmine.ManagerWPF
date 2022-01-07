@@ -13,10 +13,12 @@ namespace Redmine.ManagerWPF.Data.Models
         public string Description { get; set; }
         public string Link { get; set; }
         public Issue MainTask { get; set; }
+        public int? MainTaskId { get; set; }
         public ICollection<TimeInterval> TimesForIssue { get; set; }
         public ICollection<Comment> Comments { get; set; }
         public ICollection<Issue> Issues { get; set; }
         public Project Project { get; set; }
+        public int ProjectId { get; set; }
         public string Status { get; set; }
         public bool Done { get; set; }
     }

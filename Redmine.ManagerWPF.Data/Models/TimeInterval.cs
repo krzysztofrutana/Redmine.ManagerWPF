@@ -11,10 +11,13 @@ namespace Redmine.ManagerWPF.Data.Models
         public DateTime? TimeIntervalStart { get; set; }
         public DateTime? TimeIntervalEnd { get; set; }
         public Issue Issue { get; set; }
+        public int? IssueId { get; set; }
         public Comment Comment { get; set; }
+        public int? CommentId { get; set; }
         public string Note { get; set; }
 
         [NotMapped]
+        [Editable(false)]
         public bool IsStarted
         {
             get
@@ -25,6 +28,7 @@ namespace Redmine.ManagerWPF.Data.Models
         }
 
         [NotMapped]
+        [Editable(false)]
         public bool IsEnd
         {
             get

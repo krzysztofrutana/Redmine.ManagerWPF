@@ -105,7 +105,12 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var timeInterval = new TimeInterval();
                     timeInterval.Issue = issue;
-                    await context.InsertAsync(timeInterval);
+                    timeInterval.IssueId = issue.Id;
+                    var id = await context.InsertAsync(timeInterval);
+                    if (id.HasValue)
+                    {
+                        timeInterval.Id = id.Value;
+                    }
 
                     return timeInterval;
                 }
@@ -118,7 +123,12 @@ namespace Redmine.ManagerWPF.Desktop.Services
                 {
                     var timeInterval = new TimeInterval();
                     timeInterval.Comment = comment;
-                    await context.InsertAsync(timeInterval);
+                    timeInterval.CommentId = comment.Id;
+                    var id = await context.InsertAsync(timeInterval);
+                    if (id.HasValue)
+                    {
+                        timeInterval.Id = id.Value;
+                    }
 
                     return timeInterval;
                 }

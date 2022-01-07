@@ -66,6 +66,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     if (project != null)
                     {
                         entity.Project = project;
+                        entity.ProjectId = project.Id;
                     }
                     else
                     {

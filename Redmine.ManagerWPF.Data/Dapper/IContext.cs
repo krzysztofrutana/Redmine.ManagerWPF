@@ -9,7 +9,10 @@ namespace Redmine.ManagerWPF.Data.Dapper
     public interface IContext
     {
         Task<SqlConnection> GetConnectionAsync();
+        Task<SqlConnection> GetConnectionAsync(string server, string dbName);
 
         SqlConnection GetConnection();
+
+        Task<SqlConnection> GetMasterConnectionAsync();
     }
 }

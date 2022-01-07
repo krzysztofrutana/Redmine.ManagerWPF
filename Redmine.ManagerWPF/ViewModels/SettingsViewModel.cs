@@ -5,11 +5,13 @@ using Dapper;
 using Redmine.ManagerWPF.Data;
 using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Data.Models;
+using Redmine.ManagerWPF.Database;
 using Redmine.ManagerWPF.Desktop.Models.Settings;
 using Redmine.ManagerWPF.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -22,8 +24,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _currentSettings;
             set
             {
-                _currentSettings = value;
-                OnPropertyChanged(nameof(CurrentSettings));
+                SetProperty(ref _currentSettings, value);
             }
         }
 
@@ -38,8 +39,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             set
             {
-                _connectionStatusText = value;
-                OnPropertyChanged(nameof(ConnectionStatusText));
+                SetProperty(ref _connectionStatusText, value);
             }
         }
 
@@ -54,8 +54,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             set
             {
-                _connected = value;
-                OnPropertyChanged(nameof(Connected));
+                SetProperty(ref _connected, value);
             }
         }
 
@@ -64,10 +63,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand CreateDatabaseCommand { get; }
 
         private readonly IContext _context;
+        private readonly DatabaseManager _databaseManager;
 
         public SettingsViewModel()
         {
             _context = Ioc.Default.GetRequiredService<IContext>();
+            _databaseManager = Ioc.Default.GetRequiredService<DatabaseManager>();
 
             CurrentSettings = new SettingsModel();
             LoadCurrentSettings();
@@ -79,16 +80,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private async void ConnectionTest()
         {
             SaveSettings();
-
-            using var context = await _context.GetConnectionAsync();
-
             try
             {
-                var projects = await context.GetListAsync<Project>(new { });
-
-                if (projects != null && projects.Count() >= 0)
+                var exist = await _databaseManager.CheckDatabaseExistAsync(CurrentSettings.DatabaseName);
+                if (exist)
                 {
-                    ConnectionStatusText = "Błąd, spróbuj ponownie";
+                    var migrationManager = new MigrationManager();
+                    migrationManager.MigrateDatabase();
+
+                    ConnectionStatusText = "Połączono";
+                    Connected = true;
+                }
+                else
+                {
+                    ConnectionStatusText = "Podana baza nie istnieje";
                     Connected = false;
                 }
             }
@@ -103,26 +108,18 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private void CreateDatabase()
         {
             SaveSettings();
-            //if (!_context.Database.CanConnect())
-            //{
-            //    try
-            //    {
-            //        _context.Database.Migrate();
-            //        _context.Database.EnsureCreated();
-            //        ConnectionStatusText = "Połączono";
-            //        Connected = true;
-            //    }
-            //    catch
-            //    {
-            //        ConnectionStatusText = "Błąd, tworzenia bazy";
-            //        Connected = false;
-            //    }
-            //}
-            //else
-            //{
-            //    ConnectionStatusText = "Baza danych już istnieje";
-            //    Connected = true;
-            //}
+            try
+            {
+                var migrationManager = new MigrationManager();
+                migrationManager.MigrateDatabase();
+                ConnectionStatusText = "Połączono";
+                Connected = true;
+            }
+            catch
+            {
+                ConnectionStatusText = "Błąd, tworzenia bazy";
+                Connected = false;
+            }
         }
 
         private void LoadCurrentSettings()

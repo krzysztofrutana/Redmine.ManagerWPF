@@ -11,7 +11,15 @@
 
   <ItemGroup>
     <None Remove="Icons\logo.ico" />
+    <None Remove="Resources\add.png" />
+    <None Remove="Resources\bin.png" />
+    <None Remove="Resources\browser.png" />
     <None Remove="Resources\calendar.png" />
+    <None Remove="Resources\minus.png" />
+    <None Remove="Resources\play.png" />
+    <None Remove="Resources\save.png" />
+    <None Remove="Resources\stop.png" />
+    <None Remove="Resources\success.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +30,7 @@
     <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="7.1.2" />
+    <PackageReference Include="FluentMigrator.Runner" Version="3.3.1" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Toolkit.Mvvm" Version="7.1.2" />
@@ -36,6 +45,7 @@
     <ProjectReference Include="..\Redmine.ManagerWPF.Data\Redmine.ManagerWPF.Data.csproj" />
     <ProjectReference Include="..\Redmine.ManagerWPF.Helpers\Redmine.ManagerWPF.Helpers.csproj" />
     <ProjectReference Include="..\Redmine.ManagerWPF.Integration\Redmine.ManagerWPF.Integration.csproj" />
+    <ProjectReference Include="..\Redmine.ManagerWPF.Migrations\Redmine.ManagerWPF.Database.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -113,7 +123,31 @@
 
   <ItemGroup>
     <Resource Include="Icons\logo.ico" />
+    <Resource Include="Resources\add.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\bin.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\browser.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Resources\calendar.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\minus.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\play.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\save.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\stop.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\success.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

@@ -27,7 +27,7 @@ namespace Redmine.ManagerWPF.Desktop.Automapper
                 .ForMember(X => X.Id, m => m.Ignore())
                 .ForMember(x => x.SourceId, m => m.MapFrom(s => s.Id))
                 .ForMember(X => X.Name, m => m.MapFrom(s => s.Name))
-                .ForMember(x => x.Discription, m => m.MapFrom(s => s.Description))
+                .ForMember(x => x.Description, m => m.MapFrom(s => s.Description))
                 .ForMember(x => x.DataStart, m => m.MapFrom(s => s.CreatedOn))
                 .ForMember(x => x.Link, m => m.MapFrom<Resolvers.ProjectLinkResolver>());
 

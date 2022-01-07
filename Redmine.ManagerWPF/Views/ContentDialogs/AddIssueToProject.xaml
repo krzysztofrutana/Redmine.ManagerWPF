@@ -19,7 +19,7 @@
     <ui:ContentDialog.DataContext>
         <vm:AddIssueToProjectViewModel />
     </ui:ContentDialog.DataContext>
-    <Grid MaxHeight="400" Width="400">
+    <Grid Width="400" MaxHeight="400">
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
             <ColumnDefinition Width="0*" />
@@ -30,19 +30,27 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Nazwa:" Margin="5,0,5,5" />
-        <TextBox Grid.Row="1" Margin="5,0,5,30" Text="{Binding IssueFormModel.Name, Mode=TwoWay}" Grid.RowSpan="2" />
+        <TextBlock
+            Grid.Row="0"
+            Margin="5,0,5,5"
+            Text="Nazwa:" />
+        <TextBox
+            Grid.Row="1"
+            Grid.RowSpan="2"
+            Margin="5,0,5,30"
+            Text="{Binding IssueFormModel.Name, Mode=TwoWay}" />
         <TextBlock
             Grid.Row="2"
+            Grid.RowSpan="2"
             Margin="5,10,5,5"
-            Text="Treść:" Grid.RowSpan="2" />
+            Text="Treść:" />
         <TextBox
             Grid.Row="3"
             MinHeight="200"
             MaxHeight="250"
             Margin="5,0,5,5"
-            VerticalScrollBarVisibility="Auto"
             Text="{Binding IssueFormModel.Description, Mode=TwoWay}"
-            TextWrapping="Wrap" />
+            TextWrapping="Wrap"
+            VerticalScrollBarVisibility="Auto" />
     </Grid>
 </ui:ContentDialog>

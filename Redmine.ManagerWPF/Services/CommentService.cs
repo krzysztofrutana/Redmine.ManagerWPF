@@ -102,10 +102,8 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     if (!string.IsNullOrWhiteSpace(redmineComment.Text))
                     {
                         var entity = _mapper.Map<Comment>(redmineComment);
+                        entity.IssueId = issue.Id;
                         await context.InsertAsync(entity);
-
-                        entity.Issue = issue;
-                        await context.UpdateAsync(entity);
                     }
                 }
                 else
@@ -113,7 +111,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     if (!string.IsNullOrWhiteSpace(redmineComment.Text))
                     {
                         _mapper.Map(redmineComment, existingComment);
-                        existingComment.Issue = issue;
+                        existingComment.IssueId = issue.Id;
                         await context.UpdateAsync(existingComment);
                     }
                     else

@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentMigrator.Runner;
+using Microsoft.Extensions.DependencyInjection;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data;
 using Redmine.ManagerWPF.Data.Dapper;
+using Redmine.ManagerWPF.Database;
 using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Helpers.Interfaces;
 using System;
@@ -45,6 +47,7 @@ namespace Redmine.ManagerWPF.Desktop.Extensions
         public static IServiceCollection RegisterDbContext(this IServiceCollection services)
         {
             services.AddSingleton<IContext, Context>();
+            services.AddSingleton<DatabaseManager>();
 
             return services;
         }
@@ -52,6 +55,17 @@ namespace Redmine.ManagerWPF.Desktop.Extensions
         public static IServiceCollection RegisterMessageBoxService(this IServiceCollection services)
         {
             services.AddTransient<IMessageBoxService, MessageBoxService>();
+
+            return services;
+        }
+
+        public static IServiceCollection RegisterFluentMigrator(this IServiceCollection services)
+        {
+            services.AddLogging(c => c.AddFluentMigratorConsole())
+                .AddFluentMigratorCore()
+                .ConfigureRunner(c => c.AddSqlServer2012()
+                    .WithGlobalConnectionString("Server=.;Database=redmine_manager;Trusted_Connection=True;")
+                    .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations());
 
             return services;
         }

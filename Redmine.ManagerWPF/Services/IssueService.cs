@@ -144,17 +144,20 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     if (project != null)
                     {
                         entity.Status = Data.Enums.StatusType.New.ToString();
-                        await context.InsertAsync(entity);
 
                         var checkMainIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.ParentIssueId });
                         if (checkMainIssue != null)
                         {
-                            entity.MainTask = checkMainIssue;
+                            entity.MainTaskId = checkMainIssue.Id;
 
                         }
 
-                        entity.Project = project;
-                        await context.UpdateAsync(entity);
+                        entity.ProjectId = project.Id;
+                        var id = await context.InsertAsync(entity);
+                        if (id.HasValue)
+                        {
+                            entity.Id = id.Value;
+                        }
 
                         addedOrUpdatedIssue = entity;
                     }
@@ -165,7 +168,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
                     if (project != null)
                     {
                         _mapper.Map(redmineIssue, existingIssue);
-                        existingIssue.Project = project;
+                        existingIssue.ProjectId = project.Id;
 
                         await context.UpdateAsync(existingIssue);
 
@@ -196,7 +199,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
             var parentIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.ParentIssueId });
             if (parentIssue != null)
             {
-                issue.MainTask = parentIssue;
+                issue.MainTaskId = parentIssue.Id;
                 await context.UpdateAsync(issue);
             }
         }
@@ -210,7 +213,11 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
             using var context = await _context.GetConnectionAsync();
 
-            await context.InsertAsync(issue);
+            var id = await context.InsertAsync(issue);
+            if(id.HasValue)
+            {
+                issue.Id = id.Value;
+            }
 
             return issue;
         }

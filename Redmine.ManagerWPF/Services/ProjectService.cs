@@ -46,7 +46,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
             {
                 var entity = _mapper.Map<Project>(redmineProject);
                 entity.Status = Data.Enums.StatusType.New.ToString();
-                await context.InsertAsync(entity);
+                await context.InsertAsync<long, Project>(entity);
             }
             else
             {

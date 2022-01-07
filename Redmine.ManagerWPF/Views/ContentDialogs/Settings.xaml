@@ -39,9 +39,9 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <TextBlock
-            VerticalAlignment="Bottom"
             Grid.Row="0"
             Grid.Column="0"
+            VerticalAlignment="Bottom"
             Text="Nazwa serwera:" />
         <TextBox
             Grid.Row="1"
@@ -49,10 +49,10 @@
             Margin="0,0,5,14"
             Text="{Binding CurrentSettings.ServerName}" />
         <TextBlock
-            VerticalAlignment="Bottom"
             Grid.Row="0"
             Grid.Column="1"
             Margin="5,0,0,0"
+            VerticalAlignment="Bottom"
             Text="Nazwa bazy danych:" />
         <TextBox
             Grid.Row="1"
@@ -60,43 +60,47 @@
             Margin="5,0,0,14"
             Text="{Binding CurrentSettings.DatabaseName}" />
         <Grid
-            VerticalAlignment="Bottom"
             Grid.Row="0"
             Grid.RowSpan="2"
-            Grid.Column="2">
+            Grid.Column="2"
+            VerticalAlignment="Bottom">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button
                 Grid.Row="0"
                 Grid.Column="0"
-            Width="85"
-            MinHeight="30"
-            Margin="10,0,0,0"
-            VerticalAlignment="Center"
-            BorderBrush="DarkGray"
-            Command="{Binding CreateDatabaseCommand}" >
-                <TextBlock Text="Utwórz bazę danych" TextWrapping="Wrap" FontSize="11" TextAlignment="Center"/>
+                Width="85"
+                MinHeight="30"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                BorderBrush="DarkGray"
+                Command="{Binding CreateDatabaseCommand}">
+                <TextBlock
+                    FontSize="11"
+                    Text="Utwórz bazę danych"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
             </Button>
             <Button
                 Grid.Row="0"
-            Grid.Column="1"
-            Width="70"
-            MinHeight="30"
-            Margin="10,0,0,0"
-            VerticalAlignment="Center"
-            BorderBrush="DarkGray"
-            Command="{Binding ConnectionTestCommand}">
+                Grid.Column="1"
+                Width="70"
+                MinHeight="30"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                BorderBrush="DarkGray"
+                Command="{Binding ConnectionTestCommand}">
                 <TextBlock
-                FontSize="10"
-                Text="Test połączenia"
-                TextAlignment="Center"
-                TextWrapping="Wrap" />
+                    FontSize="10"
+                    Text="Test połączenia"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
             </Button>
             <TextBlock
                 Grid.Row="1"
@@ -109,7 +113,7 @@
                 TextAlignment="Center"
                 TextWrapping="Wrap" />
         </Grid>
-        
+
         <TextBlock
             Grid.Row="2"
             Grid.ColumnSpan="3"

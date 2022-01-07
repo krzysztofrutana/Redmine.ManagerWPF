@@ -1,13 +1,15 @@
-﻿<UserControl x:Class="Redmine.ManagerWPF.Desktop.Views.UserControls.CommentForm"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Redmine.ManagerWPF.Desktop.Views.UserControls"
-             xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
-             xmlns:conv="clr-namespace:Redmine.ManagerWPF.Desktop.Converters"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+﻿<UserControl
+    x:Class="Redmine.ManagerWPF.Desktop.Views.UserControls.CommentForm"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:Redmine.ManagerWPF.Desktop.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Redmine.ManagerWPF.Desktop.Views.UserControls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
     <UserControl.DataContext>
         <vm:CommentFormViewModel />
     </UserControl.DataContext>
@@ -15,7 +17,10 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <conv:InvertBooleanToVisibilityConverter x:Key="InvertBooleanToVisibilityConverter"/>
+            <conv:InvertBooleanToVisibilityConverter x:Key="InvertBooleanToVisibilityConverter" />
+            <BitmapImage x:Key="OpenBrowser" UriSource="/Resources/browser.png" />
+            <BitmapImage x:Key="Done" UriSource="/Resources/success.png" />
+            <BitmapImage x:Key="Undone" UriSource="/Resources/minus.png" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -33,31 +38,57 @@
         </Grid.ColumnDefinitions>
         <Grid Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Row="0" Text="Nazwa użytkownika:" Margin="5,10,10,0" />
-            <TextBox Grid.Row="1" Margin="5,0,10,0" Text="{Binding CommentFormModel.CreatedBy, Mode=TwoWay}" />
             <TextBlock
-            Grid.Row="0"
-            Grid.Column="1"
-            Margin="5,10,10,0"
-            Text="Status:" />
+                Grid.Row="0"
+                Margin="5,10,10,0"
+                Text="Nazwa użytkownika:" />
             <TextBox
-            Grid.Row="1"
-            Grid.Column="1"
-            Margin="5,0,10,0"
-            Text="{Binding CommentFormModel.Status, Mode=TwoWay}" />
-            <Button Command="{Binding SetAsDoneCommand}" Visibility="{Binding CommentFormModel.Done, Converter={StaticResource InvertBooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">
-                <TextBlock Text="Wykonane" TextWrapping="Wrap" />
+                Grid.Row="1"
+                Margin="5,0,10,0"
+                Text="{Binding CommentFormModel.CreatedBy, Mode=TwoWay}" />
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="5,10,10,0"
+                Text="Status:" />
+            <TextBox
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="5,0,10,0"
+                Text="{Binding CommentFormModel.Status, Mode=TwoWay}" />
+            <Button
+                Grid.Row="1"
+                Grid.Column="2"
+                MaxHeight="30"
+                Margin="0,0,10,0"
+                VerticalAlignment="Center"
+                BorderThickness="0"
+                Command="{Binding SetAsDoneCommand}"
+                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="Oznacz jako wykonane"
+                Visibility="{Binding CommentFormModel.Done, Converter={StaticResource InvertBooleanToVisibilityConverter}}">
+                <Image Source="{StaticResource Done}" Stretch="Fill" />
             </Button>
-            <Button Command="{Binding SetAsUndoneCommand}" Visibility="{Binding CommentFormModel.Done, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="2">
-                <TextBlock Text="Niewykonane" TextWrapping="Wrap" />
+            <Button
+                Grid.Row="1"
+                Grid.Column="2"
+                MaxHeight="30"
+                Margin="0,0,10,0"
+                VerticalAlignment="Center"
+                BorderThickness="0"
+                Command="{Binding SetAsUndoneCommand}"
+                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="Oznacz jako niewykonane"
+                Visibility="{Binding CommentFormModel.Done, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Image Source="{StaticResource Undone}" Stretch="Fill" />
             </Button>
         </Grid>
         <TextBlock
@@ -70,25 +101,33 @@
             Grid.ColumnSpan="2"
             MaxHeight="250"
             Margin="5,0,10,0"
-            VerticalScrollBarVisibility="Auto"
             Text="{Binding CommentFormModel.Text, Mode=TwoWay}"
-            TextWrapping="Wrap" />
+            TextWrapping="Wrap"
+            VerticalScrollBarVisibility="Auto" />
         <TextBlock
             Grid.Row="3"
-            Margin="5,10,10,0"
             Grid.ColumnSpan="2"
+            Margin="5,10,10,0"
             Text="Link:" />
-        <Grid Grid.Row="4"
+        <Grid
+            Grid.Row="4"
             Grid.ColumnSpan="2"
             Margin="5,0,10,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox
-                Text="{Binding CommentFormModel.Link, Mode=TwoWay}" />
-            <Button Command="{Binding OpenBrowserCommand}" VerticalAlignment="Center" Margin="10,0,10,0" Grid.Column="1">
-                <TextBlock Text="Otwórz link" TextWrapping="Wrap" />
+            <TextBox Text="{Binding CommentFormModel.Link, Mode=TwoWay}" />
+            <Button
+                Grid.Column="1"
+                MaxHeight="30"
+                Margin="10,0,10,0"
+                VerticalAlignment="Center"
+                BorderThickness="0"
+                Command="{Binding OpenBrowserCommand}"
+                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                ToolTip="Otwórz w przęglądarce">
+                <Image Source="{StaticResource OpenBrowser}" Stretch="Fill" />
             </Button>
         </Grid>
     </Grid>
