@@ -1,17 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
-using Dapper;
-using Redmine.ManagerWPF.Data;
-using Redmine.ManagerWPF.Data.Dapper;
-using Redmine.ManagerWPF.Data.Models;
+using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Database;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Models.Settings;
 using Redmine.ManagerWPF.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -22,53 +17,38 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public SettingsModel CurrentSettings
         {
             get => _currentSettings;
-            set
-            {
-                SetProperty(ref _currentSettings, value);
-            }
+            private set => SetProperty(ref _currentSettings, value);
         }
 
         private string _connectionStatusText;
 
         public string ConnectionStatusText
         {
-            get
-            {
-                return _connectionStatusText;
-            }
+            get => _connectionStatusText;
 
-            set
-            {
-                SetProperty(ref _connectionStatusText, value);
-            }
+            private set => SetProperty(ref _connectionStatusText, value);
         }
 
         private bool? _connected;
 
-        public bool? Connected
+        private bool? Connected
         {
-            get
-            {
-                return _connected;
-            }
+            get => _connected;
 
-            set
-            {
-                SetProperty(ref _connected, value);
-            }
+            set => SetProperty(ref _connected, value);
         }
 
         public IRelayCommand SaveSettingsCommand { get; }
         public IRelayCommand ConnectionTestCommand { get; }
         public IRelayCommand CreateDatabaseCommand { get; }
 
-        private readonly IContext _context;
         private readonly DatabaseManager _databaseManager;
+        private readonly ILogger<SettingsViewModel> _logger;
 
         public SettingsViewModel()
         {
-            _context = Ioc.Default.GetRequiredService<IContext>();
             _databaseManager = Ioc.Default.GetRequiredService<DatabaseManager>();
+            _logger = Ioc.Default.GetLoggerForType<SettingsViewModel>();
 
             CurrentSettings = new SettingsModel();
             LoadCurrentSettings();
@@ -97,8 +77,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     Connected = false;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(ConnectionTest), ex.Message);
                 ConnectionStatusText = "Błąd, spróbuj ponownie";
                 Connected = false;
             }
@@ -136,21 +117,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             foreach (var item in settings)
             {
-                if (item.Name == nameof(CurrentSettings.ApiKey))
+                switch (item.Name)
                 {
-                    SettingsHelper.SetApiKey(CurrentSettings.ApiKey);
-                }
-                if (item.Name == nameof(CurrentSettings.Url))
-                {
-                    SettingsHelper.SetUrl(CurrentSettings.Url);
-                }
-                if (item.Name == nameof(CurrentSettings.DatabaseName))
-                {
-                    SettingsHelper.SetDatabaseName(CurrentSettings.DatabaseName);
-                }
-                if (item.Name == nameof(CurrentSettings.ServerName))
-                {
-                    SettingsHelper.SetServerName(CurrentSettings.ServerName);
+                    case nameof(CurrentSettings.ApiKey):
+                        SettingsHelper.SetApiKey(CurrentSettings.ApiKey);
+                        break;
+                    case nameof(CurrentSettings.Url):
+                        SettingsHelper.SetUrl(CurrentSettings.Url);
+                        break;
+                    case nameof(CurrentSettings.DatabaseName):
+                        SettingsHelper.SetDatabaseName(CurrentSettings.DatabaseName);
+                        break;
+                    case nameof(CurrentSettings.ServerName):
+                        SettingsHelper.SetServerName(CurrentSettings.ServerName);
+                        break;
                 }
             }
 

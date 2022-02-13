@@ -1,8 +1,5 @@
-﻿using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows;
+﻿using System.Windows;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 
 namespace Redmine.ManagerWPF.Desktop.Helpers
 {
@@ -10,17 +7,17 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
     {
         public void ShowWarningInfoBox(string text, string caption)
         {
-            MessageBox.Show(text, caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+            ModernWpf.MessageBox.Show(text, caption, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         public void ShowInformationBox(string text, string caption)
         {
-            MessageBox.Show(text, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+            ModernWpf.MessageBox.Show(text, caption, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         public bool ShowConfirmationBox(string text, string caption)
         {
-            var result = MessageBox.Show(text, caption, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = ModernWpf.MessageBox.Show(text, caption, MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
             {
                 return true;

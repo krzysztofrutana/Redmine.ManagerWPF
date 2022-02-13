@@ -1,10 +1,9 @@
-﻿using CommunityToolkit.Mvvm.DependencyInjection;
+﻿using System;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using FluentMigrator.Runner;
+using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Database.Helpers;
 using Redmine.ManagerWPF.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Redmine.ManagerWPF.Database
 {
@@ -13,7 +12,8 @@ namespace Redmine.ManagerWPF.Database
         public async void MigrateDatabase()
         {
             var databaseService = Ioc.Default.GetRequiredService<DatabaseManager>();
-
+            var loggerFactory = Ioc.Default.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger<MigrationManager>();
 
             var connectionString = "";
             var databaseName = SettingsHelper.GetDatabaseName();
@@ -30,8 +30,6 @@ namespace Redmine.ManagerWPF.Database
                 {
                     await databaseService.CreateDatabaseAsync(databaseName);
 
-
-
                     var fluentServiceProvider = ServiceProviderHelper.CreateServiceProviderForFluentMigrator(connectionString);
 
                     var migrationService = fluentServiceProvider.GetService(typeof(IMigrationRunner)) as IMigrationRunner;
@@ -39,8 +37,9 @@ namespace Redmine.ManagerWPF.Database
                     migrationService.ListMigrations();
                     migrationService.MigrateUp();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    logger.LogError("{0} {1}", nameof(MigrateDatabase), ex.Message);
                 }
             }
         }

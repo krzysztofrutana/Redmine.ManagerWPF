@@ -1,23 +1,23 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Projects;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class SearchWindowViewModel : ObservableRecipient
     {
-        public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new AsyncObservableCollection<Models.Tree.TreeModel>();
+        public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new ExtendedObservableCollection<Models.Tree.TreeModel>();
 
         public Models.Projects.ListItemModel Project { get => _project; set => SetProperty(ref _project, value); }
 
@@ -25,26 +25,24 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public Models.Tree.TreeModel SelectedNode
         {
-            get { return _selectedNode; }
+            get => _selectedNode;
             set
             {
                 SetProperty(ref _selectedNode, value);
-                if (value != null)
+                if (value == null) return;
+                switch (value.Type)
                 {
-                    if (value.Type == nameof(Data.Models.Issue))
-                    {
+                    case nameof(Data.Models.Issue):
                         ViewIssueDetails = true;
                         ViewCommentDetails = false;
-                    }
-
-                    if (value.Type == nameof(Data.Models.Comment))
-                    {
+                        break;
+                    case nameof(Data.Models.Comment):
                         ViewIssueDetails = false;
                         ViewCommentDetails = true;
-                    }
-
-                    WeakReferenceMessenger.Default.Send(new SearchNodeChangeMessage(value));
+                        break;
                 }
+
+                WeakReferenceMessenger.Default.Send(new SearchNodeChangeMessage(value));
             }
         }
 
@@ -52,7 +50,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public string SearchText
         {
-            get { return _searchText; }
+            get => _searchText;
             set
             {
                 if (!string.IsNullOrEmpty(value))
@@ -71,8 +69,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public bool ViewIssueDetails
         {
-            get { return _viewIssueDetails; }
-            set { SetProperty(ref _viewIssueDetails, value); }
+            get => _viewIssueDetails;
+            set => SetProperty(ref _viewIssueDetails, value);
         }
 
         private bool _viewCommentDetails;
@@ -80,20 +78,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public bool ViewCommentDetails
         {
-            get { return _viewCommentDetails; }
-            set { SetProperty(ref _viewCommentDetails, value); }
+            get => _viewCommentDetails;
+            set => SetProperty(ref _viewCommentDetails, value);
         }
 
         private readonly IMapper _mapper;
-
         private readonly IssueService _issueService;
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<SearchWindowViewModel> _logger;
 
         public SearchWindowViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<SearchWindowViewModel>();
 
             WeakReferenceMessenger.Default.Register<SelectedProjectMessage>(this, (r, m) =>
             {
@@ -119,6 +118,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SearchIssues), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadań");
             }
         }

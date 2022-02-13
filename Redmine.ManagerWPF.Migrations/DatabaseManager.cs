@@ -1,19 +1,23 @@
-﻿using Dapper;
-using Redmine.ManagerWPF.Data.Dapper;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using Dapper;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Data.Dapper;
 
 namespace Redmine.ManagerWPF.Database
 {
     public class DatabaseManager
     {
         private readonly IContext _context;
+        private readonly ILogger<DatabaseManager> _logger;
+
         public DatabaseManager(IContext context)
         {
             _context = context;
+            var loggerFactory = Ioc.Default.GetRequiredService<ILoggerFactory>();
+            _logger = loggerFactory.CreateLogger<DatabaseManager>();
         }
         public async Task CreateDatabaseAsync(string dbName)
         {
@@ -29,8 +33,9 @@ namespace Redmine.ManagerWPF.Database
                         connection.Execute($"CREATE DATABASE {dbName}");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(CreateDatabaseAsync), ex.Message);
             }
         }
 
@@ -47,8 +52,9 @@ namespace Redmine.ManagerWPF.Database
                     return records.Any();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(CheckDatabaseExistAsync), ex.Message);
                 return false;
             }
         }

@@ -102,7 +102,7 @@
                                 </Grid>
                                 <Button
                                     Grid.Row="1"
-                                    MaxHeight="30"
+                                    MaxHeight="25"
                                     HorizontalAlignment="Center"
                                     BorderThickness="0"
                                     Command="{Binding Path=DataContext.StartTimeIntervalAsyncCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
@@ -175,7 +175,7 @@
                                 </Grid>
                                 <Button
                                     Grid.Row="1"
-                                    MaxHeight="30"
+                                    MaxHeight="25"
                                     HorizontalAlignment="Center"
                                     BorderThickness="0"
                                     Command="{Binding Path=DataContext.EndTimeIntervalAsyncCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
@@ -191,7 +191,7 @@
                             <Button
                                 Grid.Row="0"
                                 Grid.Column="3"
-                                MaxHeight="30"
+                                MaxHeight="25"
                                 Margin="10,0,3,0"
                                 HorizontalAlignment="Right"
                                 BorderThickness="0"
@@ -221,7 +221,7 @@
                                     TextWrapping="Wrap" />
                                 <Button
                                     Grid.Column="1"
-                                    MaxHeight="30"
+                                    MaxHeight="25"
                                     Margin="5,0,0,0"
                                     BorderThickness="0"
                                     Command="{Binding Path=DataContext.SaveTimeIntervalNoteCommand, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
@@ -243,8 +243,8 @@
         </ListView>
         <Button
             Grid.Row="1"
-            MaxWidth="30"
-            MaxHeight="30"
+            MaxWidth="25"
+            MaxHeight="25"
             Margin="0,5,30,0"
             HorizontalAlignment="Right"
             BorderThickness="0"

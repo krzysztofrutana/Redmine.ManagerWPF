@@ -1,14 +1,16 @@
-﻿using FluentMigrator.Runner;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data;
 using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Database;
 using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Linq;
-using System.Reflection;
+using Serilog;
 
 namespace Redmine.ManagerWPF.Desktop.Extensions
 {
@@ -66,6 +68,29 @@ namespace Redmine.ManagerWPF.Desktop.Extensions
                 .ConfigureRunner(c => c.AddSqlServer2012()
                     .WithGlobalConnectionString("Server=.;Database=redmine_manager;Trusted_Connection=True;")
                     .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations());
+
+            return services;
+        }
+
+        public static IServiceCollection RegisterLoggerFactory(this IServiceCollection services)
+        {
+            string logsDirectory = Path.Combine(Environment.CurrentDirectory, "logs");
+            var outputTemplate =
+                    @"[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level}] ({SourceContext}) {Message}{NewLine}{Exception}";
+
+            var serilog = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .MinimumLevel.Debug()
+                    .WriteTo.RollingFile(Path.Combine(logsDirectory, "log-{Date}.txt"), Serilog.Events.LogEventLevel.Debug, outputTemplate)
+                    .CreateLogger();
+
+            ILoggerFactory logger = LoggerFactory.Create(logging =>
+            {
+                logging.AddSerilog(serilog);
+
+            });
+
+            services.AddSingleton<ILoggerFactory>(logger);
 
             return services;
         }

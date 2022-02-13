@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Redmine.ManagerWPF.Helpers.Interfaces
+﻿namespace Redmine.ManagerWPF.Helpers.Interfaces
 {
     public interface IMessageBoxService
     {

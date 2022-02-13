@@ -1,15 +1,18 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Issues;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -17,23 +20,24 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
     {
         private TreeModel _node;
 
-        public TreeModel Node
+        private TreeModel Node
         {
-            get { return _node; }
-            set { SetProperty(ref _node, value); }
+            get => _node;
+            set => SetProperty(ref _node, value);
         }
 
         private FormModel _issueFormModel;
 
         public FormModel IssueFormModel
         {
-            get { return _issueFormModel; }
-            set { SetProperty(ref _issueFormModel, value); }
+            get => _issueFormModel;
+            private set => SetProperty(ref _issueFormModel, value);
         }
 
         private readonly IssueService _issueService;
         private readonly IMapper _mapper;
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<IssueFormViewModel> _logger;
 
         public IRelayCommand OpenBrowserCommand { get; }
         public IAsyncRelayCommand SetAsDoneCommand { get; }
@@ -44,6 +48,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<IssueFormViewModel>();
 
             WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
             {
@@ -55,24 +60,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             SetAsUndoneCommand = new AsyncRelayCommand(SetAsUndone);
         }
 
-        public async void ReceiveNode(TreeModel message)
+        private async void ReceiveNode(TreeModel message)
         {
             try
             {
-                if (message.Type == nameof(Data.Models.Issue))
-                {
-                    Node = message;
-                    var issue = await _issueService.GetIssueAsync(Node.Id).ConfigureAwait(false);
-                    if (issue != null)
-                    {
-                        IssueFormModel = _mapper.Map<FormModel>(issue);
-                        WeakReferenceMessenger.Default.Send(new InformationLoadedMessage(Node));
-                    }
-
-                }
+                if (message.Type != nameof(Data.Models.Issue)) return;
+                Node = message;
+                var issue = await _issueService.GetIssueAsync(Node.Id).ConfigureAwait(false);
+                if (issue == null) return;
+                IssueFormModel = _mapper.Map<FormModel>(issue);
+                WeakReferenceMessenger.Default.Send(new InformationLoadedMessage(Node));
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadania");
             }
         }
@@ -92,8 +93,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     WeakReferenceMessenger.Default.Send(new ChangeSelectedIssueDoneStatus(Node));
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SetAsDone), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako zakończone");
             }
         }
@@ -113,8 +115,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     WeakReferenceMessenger.Default.Send(new ChangeSelectedIssueDoneStatus(Node));
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SetAsUndone), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako niezakończone");
             }
         }

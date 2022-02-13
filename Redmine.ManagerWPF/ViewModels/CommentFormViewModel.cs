@@ -1,15 +1,18 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Comments;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -17,23 +20,24 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
     {
         private TreeModel _node;
 
-        public TreeModel Node
+        private TreeModel Node
         {
-            get { return _node; }
-            set { SetProperty(ref _node, value); }
+            get => _node;
+            set => SetProperty(ref _node, value);
         }
 
         private FormModel _commentFormModel;
 
         public FormModel CommentFormModel
         {
-            get { return _commentFormModel; }
-            set { SetProperty(ref _commentFormModel, value); }
+            get => _commentFormModel;
+            set => SetProperty(ref _commentFormModel, value);
         }
 
         private readonly CommentService _commentService;
         private readonly IMapper _mapper;
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<CommentFormViewModel> _logger;
 
         public IRelayCommand OpenBrowserCommand { get; }
 
@@ -45,6 +49,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _commentService = Ioc.Default.GetRequiredService<CommentService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<CommentFormViewModel>();
 
             WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
             {
@@ -57,31 +62,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             SetAsUndoneCommand = new AsyncRelayCommand(SetAsUndone);
         }
 
-        public async void ReceiveNode(TreeModel message)
+        private async void ReceiveNode(TreeModel message)
         {
             try
             {
-                if (message.Type == nameof(Data.Models.Comment))
-                {
-                    Node = message;
-                    var comment = await _commentService.GetCommentAsync(Node.Id).ConfigureAwait(false);
-                    if (comment != null)
-                    {
-                        CommentFormModel = _mapper.Map<FormModel>(comment);
-                        if (comment.Done)
-                        {
-                            CommentFormModel.Status = "Wykonane";
-                        }
-                        else
-                        {
-                            CommentFormModel.Status = "Niewykonane";
-                        }
-                        WeakReferenceMessenger.Default.Send(new InformationLoadedMessage(Node));
-                    }
-                }
+                if (message.Type != nameof(Data.Models.Comment)) return;
+                Node = message;
+                var comment = await _commentService.GetCommentAsync(Node.Id).ConfigureAwait(false);
+                if (comment == null) return;
+                CommentFormModel = _mapper.Map<FormModel>(comment);
+                CommentFormModel.Status = comment.Done ? "Wykonane" : "Niewykonane";
+                WeakReferenceMessenger.Default.Send(new InformationLoadedMessage(Node));
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu komentarza");
             }
 
@@ -103,8 +98,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     WeakReferenceMessenger.Default.Send(new ChangeSelectedCommentDoneStatus(Node));
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SetAsDone), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako zakończone");
             }
         }
@@ -125,8 +121,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     WeakReferenceMessenger.Default.Send(new ChangeSelectedCommentDoneStatus(Node));
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SetAsUndone), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako niezakończone");
             }
         }

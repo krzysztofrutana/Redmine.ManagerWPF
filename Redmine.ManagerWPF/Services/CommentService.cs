@@ -1,13 +1,12 @@
-﻿using AutoMapper;
-using Dapper;
-using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data;
-using Redmine.ManagerWPF.Data.Dapper;
-using Redmine.ManagerWPF.Data.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Dapper;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
+using Redmine.ManagerWPF.Data.Dapper;
+using Redmine.ManagerWPF.Data.Models;
 
 namespace Redmine.ManagerWPF.Desktop.Services
 {
@@ -26,7 +25,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
         {
             using var context = await _context.GetConnectionAsync();
 
-            return context.Get<Comment>(id);
+            return await context.GetAsync<Comment>(id);
         }
 
         public async Task<Comment> GetCommentWithTimeIntervalAsync(int id)
@@ -89,40 +88,57 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task SynchronizeCommentAsync(Integration.Models.JournalDto redmineComment, Issue issue)
         {
-            try
+            using var context = await _context.GetConnectionAsync();
+
+            var query = @"SELECT * FROM [dbo].[Comments] WHERE SourceId = @id";
+
+            var existingComment = await context.QueryFirstOrDefaultAsync<Comment>(query, new { id = redmineComment.Id });
+
+            if (existingComment == null)
             {
-                using var context = await _context.GetConnectionAsync();
-
-                var query = @"SELECT * FROM [dbo].[Comments] WHERE SourceId = @id";
-
-                var existingComment = await context.QueryFirstOrDefaultAsync<Comment>(query, new { id = redmineComment.Id });
-
-                if (existingComment == null)
+                if (!string.IsNullOrWhiteSpace(redmineComment.Text))
                 {
-                    if (!string.IsNullOrWhiteSpace(redmineComment.Text))
-                    {
-                        var entity = _mapper.Map<Comment>(redmineComment);
-                        entity.IssueId = issue.Id;
-                        await context.InsertAsync(entity);
-                    }
+                    var entity = _mapper.Map<Comment>(redmineComment);
+                    entity.IssueId = issue.Id;
+                    await context.InsertAsync(entity);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(redmineComment.Text))
+                {
+                    _mapper.Map(redmineComment, existingComment);
+                    existingComment.IssueId = issue.Id;
+                    await context.UpdateAsync(existingComment);
                 }
                 else
                 {
-                    if (!string.IsNullOrWhiteSpace(redmineComment.Text))
-                    {
-                        _mapper.Map(redmineComment, existingComment);
-                        existingComment.IssueId = issue.Id;
-                        await context.UpdateAsync(existingComment);
-                    }
-                    else
-                    {
-                        await context.DeleteAsync(existingComment);
-                    }
+                    await context.DeleteAsync(existingComment);
                 }
             }
-            catch (Exception ex)
+        }
+
+        public async Task SynchronizeCommentAsync(Integration.Models.JournalDto redmineComment, Comment comment)
+        {
+            using var context = await _context.GetConnectionAsync();
+
+            var existingComment = await context.GetAsync<Comment>(comment.Id);
+
+            if (existingComment == null)
             {
-                throw;
+                return;
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(redmineComment.Text))
+                {
+                    _mapper.Map(redmineComment, existingComment);
+                    await context.UpdateAsync(existingComment);
+                }
+                else
+                {
+                    await context.DeleteAsync(existingComment);
+                }
             }
         }
     }

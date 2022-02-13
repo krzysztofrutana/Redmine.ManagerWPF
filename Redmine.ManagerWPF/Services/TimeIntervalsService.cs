@@ -1,14 +1,13 @@
-﻿using Dapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Dapper;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data;
 using Redmine.ManagerWPF.Data.Dapper;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.Services
 {

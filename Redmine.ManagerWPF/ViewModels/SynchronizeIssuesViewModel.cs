@@ -1,83 +1,82 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.DependencyInjection;
-using CommunityToolkit.Mvvm.Input;
-using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data.Enums;
-using Redmine.ManagerWPF.Desktop.Services;
-using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
+using Redmine.ManagerWPF.Data.Enums;
+using Redmine.ManagerWPF.Desktop.Extensions;
+using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class SynchronizeIssuesViewModel : ObservableRecipient
     {
-        private readonly IssueService _issueService;
-        private readonly Integration.Services.IssueService _integrationIssueService;
-
         private string _totalIssuesCount;
 
         public string TotalIssuesCount
         {
-            get { return _totalIssuesCount; }
-            set { SetProperty(ref _totalIssuesCount, value, nameof(TotalIssuesCount)); }
+            get => _totalIssuesCount;
+            set => SetProperty(ref _totalIssuesCount, value, nameof(TotalIssuesCount));
         }
 
         private int _value;
 
         public int Value
         {
-            get { return _value; }
-            set { SetProperty(ref _value, value, nameof(Value)); }
+            get => _value;
+            set => SetProperty(ref _value, value, nameof(Value));
         }
 
         private decimal _progressBarValue;
 
         public decimal ProgressBarValue
         {
-            get { return _progressBarValue; }
-            set { SetProperty(ref _progressBarValue, value, nameof(ProgressBarValue)); }
+            get => _progressBarValue;
+            set => SetProperty(ref _progressBarValue, value, nameof(ProgressBarValue));
         }
 
         private bool _showOk;
 
         public bool ShowOk
         {
-            get { return _showOk; }
-            set { SetProperty(ref _showOk, value); }
+            get => _showOk;
+            set => SetProperty(ref _showOk, value);
         }
 
         private bool _showDownloadIssues;
 
         public bool ShowDownloadIssues
         {
-            get { return _showDownloadIssues; }
-            set { SetProperty(ref _showDownloadIssues, value); }
+            get => _showDownloadIssues;
+            set => SetProperty(ref _showDownloadIssues, value);
         }
 
         private bool _showProgressText;
 
         public bool ShowProgressText
         {
-            get { return _showProgressText; }
-            set { SetProperty(ref _showProgressText, value); }
+            get => _showProgressText;
+            set => SetProperty(ref _showProgressText, value);
         }
 
         private bool _showTreeUpdateText;
 
         public bool ShowTreeUpdateText
         {
-            get { return _showTreeUpdateText; }
-            set { SetProperty(ref _showTreeUpdateText, value); }
+            get => _showTreeUpdateText;
+            set => SetProperty(ref _showTreeUpdateText, value);
         }
 
         private string _primaryButtonText;
 
         public string PrimaryButtonText
         {
-            get { return _primaryButtonText; }
+            get => _primaryButtonText;
             set { SetProperty(ref _primaryButtonText, value); }
         }
 
@@ -90,6 +89,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         }
 
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<SynchronizeIssuesViewModel> _logger;
+        private readonly IssueService _issueService;
+        private readonly Integration.Services.IssueService _integrationIssueService;
+        private readonly Integration.Services.JournalService _integrationJournalService;
 
         public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
         public IRelayCommand<ICloseable> CancelCommand { get; }
@@ -99,6 +102,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _integrationIssueService = Ioc.Default.GetRequiredService<Integration.Services.IssueService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<SynchronizeIssuesViewModel>();
+            _integrationJournalService = Ioc.Default.GetRequiredService<Integration.Services.JournalService>();
 
             CancelButtonText = "Zamknij";
             PrimaryButtonText = "Rozpocznij";
@@ -121,7 +126,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 decimal step = fullBarValue / redmineIssues.Count;
                 foreach (var redmineIssue in redmineIssues)
                 {
-                    redmineIssue.Comments = await _integrationIssueService.GetIssueJournals(redmineIssue);
+                    redmineIssue.Comments = await _integrationJournalService.GetIssueJournals(redmineIssue);
                     Value++;
                     ProgressBarValue = step * Value;
                 }
@@ -155,13 +160,15 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 SetStatus(SynchronizeIssueStatusType.AllDone);
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                _logger.LogError("{0} {1}", nameof(SynchronizeIssues), ex.Message);
                 CancelButtonText = "Kliknij by zamknąć";
                 _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SynchronizeIssues), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji zadań");
             }
         }

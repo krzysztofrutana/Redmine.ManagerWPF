@@ -1,10 +1,17 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data.Enums;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Helpers;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
@@ -12,25 +19,21 @@ using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Desktop.Views.ContentDialogs;
 using Redmine.ManagerWPF.Desktop.Views.Windows;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class MainWindowViewModel : ObservableRecipient
     {
+        private bool _isDarkMode;
+        public bool IsDarkMode { get => _isDarkMode; set => SetProperty(ref _isDarkMode, value); }
         public ObservableCollection<Models.Projects.ListItemModel> Projects { get; private set; } = new ObservableCollection<Models.Projects.ListItemModel>();
-        public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new AsyncObservableCollection<Models.Tree.TreeModel>();
+        public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new ExtendedObservableCollection<Models.Tree.TreeModel>();
 
         private Models.Projects.ListItemModel _selectedProject;
 
         public Models.Projects.ListItemModel SelectedProject
         {
-            get { return _selectedProject; }
+            get => _selectedProject;
             set
             {
                 SetProperty(ref _selectedProject, value);
@@ -44,32 +47,30 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        private Models.Tree.TreeModel _selectedNode;
+        private TreeModel _selectedNode;
 
-        public Models.Tree.TreeModel SelectedNode
+        public TreeModel SelectedNode
         {
-            get { return _selectedNode; }
+            get => _selectedNode;
             set
             {
                 SetProperty(ref _selectedNode, value);
-                if (value != null)
+                if (value == null) return;
+                switch (value.Type)
                 {
-                    if (value.Type == nameof(Data.Models.Issue))
-                    {
+                    case nameof(Data.Models.Issue):
                         ViewIssueDetails = true;
                         ViewCommentDetails = false;
                         ViewTimeIntervalList = true;
-                    }
-
-                    if (value.Type == nameof(Data.Models.Comment))
-                    {
+                        break;
+                    case nameof(Data.Models.Comment):
                         ViewIssueDetails = false;
                         ViewCommentDetails = true;
                         ViewTimeIntervalList = true;
-                    }
-
-                    WeakReferenceMessenger.Default.Send(new NodeChangeMessage(value));
+                        break;
                 }
+
+                WeakReferenceMessenger.Default.Send(new NodeChangeMessage(value));
             }
         }
 
@@ -77,32 +78,32 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public bool ViewProjectDetails
         {
-            get { return _viewProjectDetails; }
-            set { SetProperty(ref _viewProjectDetails, value); }
+            get => _viewProjectDetails;
+            set => SetProperty(ref _viewProjectDetails, value);
         }
 
         private bool _viewIssueDetails;
 
         public bool ViewIssueDetails
         {
-            get { return _viewIssueDetails; }
-            set { SetProperty(ref _viewIssueDetails, value); }
+            get => _viewIssueDetails;
+            set => SetProperty(ref _viewIssueDetails, value);
         }
 
         private bool _viewCommentDetails;
 
         public bool ViewCommentDetails
         {
-            get { return _viewCommentDetails; }
-            set { SetProperty(ref _viewCommentDetails, value); }
+            get => _viewCommentDetails;
+            set => SetProperty(ref _viewCommentDetails, value);
         }
 
         private bool _viewTimeIntervalList;
 
         public bool ViewTimeIntervalList
         {
-            get { return _viewTimeIntervalList; }
-            set { SetProperty(ref _viewTimeIntervalList, value); }
+            get => _viewTimeIntervalList;
+            set => SetProperty(ref _viewTimeIntervalList, value);
         }
 
         private readonly IMapper _mapper;
@@ -111,6 +112,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly IssueService _issueService;
         private readonly TimeIntervalsService _timeIntervalsService;
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<MainWindowViewModel> _logger;
+        private readonly Integration.Services.IssueService _integrationIssueService;
+        private readonly Integration.Services.JournalService _integrationJournalService;
+        private readonly CommentService _commentService;
 
         public IRelayCommand SynchronizeProjectsCommand { get; }
         public IRelayCommand SynchronizeIssuesCommand { get; }
@@ -123,8 +128,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand OpenCreateBackupDialogCommand { get; }
         public IRelayCommand OpenRestoreBackupDialogCommand { get; }
         public IAsyncRelayCommand DeleteIssueFromProjectCommand { get; }
+        public IAsyncRelayCommand<TreeModel> SynchronizeNodeCommand { get; }
         public IRelayCommand<ITrayable> ShowMainWindowCommand { get; }
-        public IRelayCommand<ITrayable> CloseMainWindowCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -133,6 +138,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<MainWindowViewModel>();
+            _integrationIssueService = Ioc.Default.GetRequiredService<Integration.Services.IssueService>();
+            _integrationJournalService = Ioc.Default.GetRequiredService<Integration.Services.JournalService>();
+            _commentService = Ioc.Default.GetRequiredService<CommentService>();
 
             SynchronizeProjectsCommand = new RelayCommand(ShowSynchronizeProjectDialog);
             SynchronizeIssuesCommand = new RelayCommand(SynchronizeIssuesDialog);
@@ -146,6 +155,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             OpenRestoreBackupDialogCommand = new RelayCommand(OpenRestoreBackupDialog);
             DeleteIssueFromProjectCommand = new AsyncRelayCommand(DeleteIsuueFromProject);
             ShowMainWindowCommand = new RelayCommand<ITrayable>(ShowFromTray);
+            SynchronizeNodeCommand = new AsyncRelayCommand<TreeModel>(SynchronizeNode);
 
             WeakReferenceMessenger.Default.Register<ChangeSelectedIssueDoneStatus>(this, (r, m) =>
             {
@@ -177,19 +187,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public void ShowFromTray(ITrayable window)
         {
-            if (window != null)
-            {
-                window.OpenFromTray();
-            }
+            window?.OpenFromTray();
         }
 
         private void AddToTreeView(Data.Models.Issue value)
         {
-            if (value != null)
-            {
-                var issue = _mapper.Map<Models.Tree.TreeModel>(value);
-                Issues.Add(issue);
-            }
+            if (value == null) return;
+            var issue = _mapper.Map<Models.Tree.TreeModel>(value);
+            Issues.Add(issue);
         }
 
         private void ChangeSelectedAsDone(TreeModel value)
@@ -211,11 +216,13 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     Projects.Add(item);
                 }
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                _logger.LogError("{0} {1}", nameof(LoadProjects), ex.Message);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(LoadProjects), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu projektów");
             }
         }
@@ -246,8 +253,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(LoadIssuesForProject), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy zadań");
             }
         }
@@ -330,6 +338,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(DeleteIsuueFromProject), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Brak wybranego projektu");
             }
         }
@@ -354,6 +363,72 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
 
             return false;
+        }
+
+        private async Task SynchronizeNode(TreeModel node)
+        {
+            switch (node.Type)
+            {
+                case nameof(ObjectType.Comment):
+                    await SynchronizeComment(node.Id);
+                    break;
+                case nameof(ObjectType.Issue):
+                    await SynchronizeIssue(node.Id);
+                    break;
+            }
+
+            if (SelectedNode?.Id == node.Id && SelectedNode?.Type == node.Type)
+            {
+                WeakReferenceMessenger.Default.Send(new NodeChangeMessage(node));
+            }
+        }
+
+        private async Task SynchronizeIssue(int issueId)
+        {
+            try
+            {
+                var issue = await _issueService.GetIssueAsync(issueId);
+
+                if (issue == null)
+                {
+                    _messageBoxService.ShowWarningInfoBox("Nie znaleziono zadania w bazie", "Błąd");
+                    return;
+                }
+
+                var redmineIssue = await _integrationIssueService.GetIssue(issue.SourceId);
+                if (redmineIssue == null)
+                {
+                    _messageBoxService.ShowWarningInfoBox("Nie znaleziono zadania w Redmine", "Błąd");
+                    return;
+                }
+
+                redmineIssue.Comments = await _integrationJournalService.GetIssueJournals(redmineIssue);
+
+                await _issueService.SynchronizeIssues(redmineIssue);
+
+                await LoadIssuesForProject();
+
+                _messageBoxService.ShowInformationBox("Pomyślnie zsynchronizowano", "Sukces");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("{0} {1}", nameof(SynchronizeIssue), ex.Message);
+                _messageBoxService.ShowWarningInfoBox(String.Format("Nie udało się zsynchronizować zadania. {0}", ex.Message), "Błąd");
+            }
+        }
+
+        private async Task SynchronizeComment(int commentId)
+        {
+
+            var comment = await _commentService.GetCommentAsync(commentId);
+
+            if (comment == null)
+            {
+                _messageBoxService.ShowWarningInfoBox("Nie znaleziono komentarza w bazie", "Błąd");
+                return;
+            }
+
+            await SynchronizeIssue(comment.IssueId);
         }
     }
 }

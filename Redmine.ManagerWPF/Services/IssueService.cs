@@ -1,13 +1,12 @@
-﻿using AutoMapper;
-using Dapper;
-using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data;
-using Redmine.ManagerWPF.Data.Dapper;
-using Redmine.ManagerWPF.Data.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Dapper;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
+using Redmine.ManagerWPF.Data.Dapper;
+using Redmine.ManagerWPF.Data.Models;
 
 namespace Redmine.ManagerWPF.Desktop.Services
 {
@@ -126,67 +125,60 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
         public async Task SynchronizeIssues(Integration.Models.IssueDto redmineIssue)
         {
-            try
+            using var context = await _context.GetConnectionAsync();
+
+            var query = @"SELECT * FROM [dbo].[Issues] WHERE SourceId = @id";
+
+            var existingIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.Id });
+
+            Issue addedOrUpdatedIssue = null;
+
+            if (existingIssue == null)
             {
-                using var context = await _context.GetConnectionAsync();
+                var entity = _mapper.Map<Issue>(redmineIssue);
 
-                var query = @"SELECT * FROM [dbo].[Issues] WHERE SourceId = @id";
-
-                var existingIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.Id });
-
-                Issue addedOrUpdatedIssue = null;
-
-                if (existingIssue == null)
+                var project = await _projectService.GetProjectBySourceIdAsync(redmineIssue.ProjectId);
+                if (project != null)
                 {
-                    var entity = _mapper.Map<Issue>(redmineIssue);
+                    entity.Status = Data.Enums.StatusType.New.ToString();
 
-                    var project = await _projectService.GetProjectBySourceIdAsync(redmineIssue.ProjectId);
-                    if (project != null)
+                    var checkMainIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.ParentIssueId });
+                    if (checkMainIssue != null)
                     {
-                        entity.Status = Data.Enums.StatusType.New.ToString();
+                        entity.MainTaskId = checkMainIssue.Id;
 
-                        var checkMainIssue = await context.QueryFirstOrDefaultAsync<Issue>(query, new { id = redmineIssue.ParentIssueId });
-                        if (checkMainIssue != null)
-                        {
-                            entity.MainTaskId = checkMainIssue.Id;
-
-                        }
-
-                        entity.ProjectId = project.Id;
-                        var id = await context.InsertAsync(entity);
-                        if (id.HasValue)
-                        {
-                            entity.Id = id.Value;
-                        }
-
-                        addedOrUpdatedIssue = entity;
                     }
-                }
-                else
-                {
-                    var project = await _projectService.GetProjectBySourceIdAsync(redmineIssue.ProjectId);
-                    if (project != null)
+
+                    entity.ProjectId = project.Id;
+                    var id = await context.InsertAsync(entity);
+                    if (id.HasValue)
                     {
-                        _mapper.Map(redmineIssue, existingIssue);
-                        existingIssue.ProjectId = project.Id;
-
-                        await context.UpdateAsync(existingIssue);
-
-                        addedOrUpdatedIssue = existingIssue;
+                        entity.Id = id.Value;
                     }
-                }
 
-                if (addedOrUpdatedIssue != null)
-                {
-                    foreach (var commentDto in redmineIssue.Comments)
-                    {
-                        await _commentService.SynchronizeCommentAsync(commentDto, addedOrUpdatedIssue);
-                    }
+                    addedOrUpdatedIssue = entity;
                 }
             }
-            catch (Exception ex)
+            else
             {
-                throw;
+                var project = await _projectService.GetProjectBySourceIdAsync(redmineIssue.ProjectId);
+                if (project != null)
+                {
+                    _mapper.Map(redmineIssue, existingIssue);
+                    existingIssue.ProjectId = project.Id;
+
+                    await context.UpdateAsync(existingIssue);
+
+                    addedOrUpdatedIssue = existingIssue;
+                }
+            }
+
+            if (addedOrUpdatedIssue != null)
+            {
+                foreach (var commentDto in redmineIssue.Comments)
+                {
+                    await _commentService.SynchronizeCommentAsync(commentDto, addedOrUpdatedIssue);
+                }
             }
         }
 
@@ -214,7 +206,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
             using var context = await _context.GetConnectionAsync();
 
             var id = await context.InsertAsync(issue);
-            if(id.HasValue)
+            if (id.HasValue)
             {
                 issue.Id = id.Value;
             }

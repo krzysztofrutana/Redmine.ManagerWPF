@@ -1,16 +1,8 @@
-﻿using CommunityToolkit.Mvvm.DependencyInjection;
+﻿using System.Windows;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Redmine.ManagerWPF.Database;
 using Redmine.ManagerWPF.Desktop.Extensions;
-using Redmine.ManagerWPF.Desktop.Services;
-using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
 
 namespace Redmine.ManagerWPF
 {
@@ -27,6 +19,7 @@ namespace Redmine.ManagerWPF
                .RegisterAutomapper()
                .RegisterDataServices()
                .RegisterMessageBoxService()
+               .RegisterLoggerFactory()
                .BuildServiceProvider());
 
             MigrateDatabase();

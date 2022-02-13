@@ -1,49 +1,50 @@
-﻿using AutoMapper;
+﻿using System.Diagnostics;
+using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Models.Issues;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
-    public class IssueFormSearchWIndowViewModel : ObservableRecipient
+    public class IssueFormSearchWindowViewModel : ObservableRecipient
     {
         private TreeModel _node;
 
-        public TreeModel Node
+        private TreeModel Node
         {
-            get { return _node; }
-            set { SetProperty(ref _node, value); }
+            get => _node;
+            set => SetProperty(ref _node, value);
         }
 
         private FormModel _issueFormModel;
 
         public FormModel IssueFormModel
         {
-            get { return _issueFormModel; }
-            set { SetProperty(ref _issueFormModel, value); }
+            get => _issueFormModel;
+            set => SetProperty(ref _issueFormModel, value);
         }
 
         private readonly IssueService _issueService;
         private readonly IMapper _mapper;
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<IssueFormSearchWindowViewModel> _logger;
 
         public IRelayCommand OpenBrowserCommand { get; }
-        public IAsyncRelayCommand SetAsDoneCommand { get; }
-        public IAsyncRelayCommand SetAsUndoneCommand { get; }
 
-        public IssueFormSearchWIndowViewModel()
+        public IssueFormSearchWindowViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<IssueFormSearchWindowViewModel>();
 
             WeakReferenceMessenger.Default.Register<SearchNodeChangeMessage>(this, (r, m) =>
             {
@@ -53,22 +54,21 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             OpenBrowserCommand = new RelayCommand(OpenBrowser);
         }
 
-        public async void ReceiveNode(TreeModel message)
+        private async void ReceiveNode(TreeModel message)
         {
             try
             {
-                if (message.Type == nameof(Data.Models.Issue))
+                if (message.Type != nameof(Data.Models.Issue)) return;
+                Node = message;
+                var issue = await _issueService.GetIssueAsync(Node.Id);
+                if (issue != null)
                 {
-                    Node = message;
-                    var issue = await _issueService.GetIssueAsync(Node.Id);
-                    if (issue != null)
-                    {
-                        IssueFormModel = _mapper.Map<FormModel>(issue);
-                    }
+                    IssueFormModel = _mapper.Map<FormModel>(issue);
                 }
             }
             catch (System.Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadania");
             }
         }

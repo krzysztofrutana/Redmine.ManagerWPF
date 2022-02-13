@@ -106,9 +106,7 @@
                 Grid.Row="1"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
-                Background="{Binding Connected, Converter={StaticResource BoolToColorConverter}}"
                 FontSize="10"
-                Foreground="{Binding Connected, Converter={StaticResource BoolToColorConverter}}"
                 Text="{Binding ConnectionStatusText}"
                 TextAlignment="Center"
                 TextWrapping="Wrap" />

@@ -1,13 +1,14 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.DependencyInjection;
-using CommunityToolkit.Mvvm.Input;
-using ModernWpf.Controls;
-using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Desktop.Services;
-using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Redmine.ManagerWPF.Abstraction.Interfaces;
+using Redmine.ManagerWPF.Desktop.Extensions;
+using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Helpers.Interfaces;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -20,60 +21,62 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public int TotalProjectsCount
         {
-            get { return _totalProjectsCount; }
-            set { SetProperty(ref _totalProjectsCount, value); }
+            get => _totalProjectsCount;
+            private set => SetProperty(ref _totalProjectsCount, value);
         }
 
         private int _value;
 
         public int Value
         {
-            get { return _value; }
-            set { SetProperty(ref _value, value); }
+            get => _value;
+            private set => SetProperty(ref _value, value);
         }
 
         private decimal _progressBarValue;
 
         public decimal ProgressBarValue
         {
-            get { return _progressBarValue; }
-            set { SetProperty(ref _progressBarValue, value); }
+            get => _progressBarValue;
+            set => SetProperty(ref _progressBarValue, value);
         }
 
         private bool _showOk;
 
         public bool ShowOk
         {
-            get { return _showOk; }
-            set { SetProperty(ref _showOk, value); }
+            get => _showOk;
+            set => SetProperty(ref _showOk, value);
         }
 
         private string _primaryButtonText;
 
         public string PrimaryButtonText
         {
-            get { return _primaryButtonText; }
-            set { SetProperty(ref _primaryButtonText, value); }
+            get => _primaryButtonText;
+            private set => SetProperty(ref _primaryButtonText, value);
         }
 
         private string _cancelButtonText;
 
         public string CancelButtonText
         {
-            get { return _cancelButtonText; }
-            set { SetProperty(ref _cancelButtonText, value); }
+            get => _cancelButtonText;
+            private set => SetProperty(ref _cancelButtonText, value);
         }
 
         public IAsyncRelayCommand SynchronizeProjectsCommand { get; }
         public IRelayCommand<ICloseable> CancelCommand { get; }
 
         private readonly IMessageBoxService _messageBoxService;
+        private readonly ILogger<SynchronizeProjectsViewModel> _logger;
 
         public SynchronizeProjectsViewModel()
         {
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _integrationProjectService = Ioc.Default.GetRequiredService<Integration.Services.ProjectService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _logger = Ioc.Default.GetLoggerForType<SynchronizeProjectsViewModel>();
 
             CancelButtonText = "Zamknij";
             PrimaryButtonText = "Rozpocznij";
@@ -82,7 +85,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             CancelCommand = new RelayCommand<ICloseable>(Cancel);
         }
 
-        public async Task SynchronizeProject(CancellationToken token)
+        private async Task SynchronizeProject(CancellationToken token)
         {
             try
             {
@@ -103,18 +106,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 CancelButtonText = String.Empty;
                 CancelButtonText = "Kliknij by zamknąć";
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                _logger.LogError("{0} {1}", nameof(SynchronizeProject), ex.Message);
                 CancelButtonText = "Kliknij by zamknąć";
                 _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SynchronizeProject), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji projektów");
             }
         }
 
-        public void Cancel(ICloseable dialog)
+        private void Cancel(ICloseable dialog)
         {
             if (CancelButtonText == "Przerwij")
             {
@@ -123,10 +128,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             else
             {
-                if (dialog != null)
-                {
-                    dialog.Close();
-                }
+                dialog?.Close();
             }
         }
     }

@@ -1,21 +1,15 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Data.SqlClient;
+using System.IO;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data.Enums;
-using Redmine.ManagerWPF.Data.Models;
-using Redmine.ManagerWPF.Desktop.Messages;
-using Redmine.ManagerWPF.Desktop.Services;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Helpers;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
@@ -26,16 +20,16 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public string FolderPath
         {
-            get { return _folderPath; }
-            set { SetProperty(ref _folderPath, value); }
+            get => _folderPath;
+            private set => SetProperty(ref _folderPath, value);
         }
 
         private string _information;
 
         public string Information
         {
-            get { return _information; }
-            set { SetProperty(ref _information, value); }
+            get => _information;
+            private set => SetProperty(ref _information, value);
         }
 
         public IAsyncRelayCommand<ICloseable> CloseWindowCommand { get; }
@@ -43,12 +37,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand OpenFolderPickerDialogCommand { get; }
 
         private readonly IMessageBoxService _messageBoxService;
-        private readonly IMapper _mapper;
+        private readonly ILogger<CreateDatabaseBackupViewModel> _logger;
 
         public CreateDatabaseBackupViewModel()
         {
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
-            _mapper = Ioc.Default.GetRequiredService<IMapper>();
+            _logger = Ioc.Default.GetLoggerForType<CreateDatabaseBackupViewModel>();
 
             CloseWindowCommand = new AsyncRelayCommand<ICloseable>(CloseWindow);
             CreateBackupCommand = new AsyncRelayCommand(CreateBackupAsync);
@@ -58,13 +52,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private void OpenFolderPickerDialog()
         {
-            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
             {
-                System.Windows.Forms.DialogResult result = dialog.ShowDialog();
-                if (result == System.Windows.Forms.DialogResult.OK)
-                {
-                    FolderPath = dialog.SelectedPath;
-                }
+                FolderPath = dialog.SelectedPath;
             }
         }
 
@@ -74,30 +66,26 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 if (!string.IsNullOrWhiteSpace(FolderPath))
                 {
-
-                    var connectionString = "";
                     var databaseName = SettingsHelper.GetDatabaseName();
                     var server = SettingsHelper.GetServerName();
 
                     if (!string.IsNullOrWhiteSpace(databaseName) && !string.IsNullOrWhiteSpace(server))
                     {
-                        connectionString = $"Server={server};Database={databaseName};Trusted_Connection=True;";
-                        var fileName = string.Format("{0}_{1}.bak", databaseName, DateTime.Now.ToString("dd-MM-yyyy-HH-mm"));
+                        var connectionString = $"Server={server};Database={databaseName};Trusted_Connection=True;";
+                        var fileName = $"{databaseName}_{DateTime.Now:dd-MM-yyyy-HH-mm}.bak";
 
-                        using (var connection = new SqlConnection(connectionString))
+                        await using var connection = new SqlConnection(connectionString);
+                        var query = $"BACKUP DATABASE [{databaseName}] TO DISK='{Path.Combine(FolderPath, fileName)}'";
+
+                        await using (var command = new SqlCommand(query, connection))
                         {
-                            var query = String.Format("BACKUP DATABASE [{0}] TO DISK='{1}'", databaseName, Path.Combine(FolderPath, fileName));
-
-                            using (var command = new SqlCommand(query, connection))
-                            {
-                                connection.Open();
-                                await command.ExecuteNonQueryAsync();
-                            }
-
-                            Information = $"Wykonano kopię do pliku {fileName}";
-
-                            _messageBoxService.ShowInformationBox("Backup zakończony powodzeniem", "Sukces");
+                            connection.Open();
+                            await command.ExecuteNonQueryAsync();
                         }
+
+                        Information = $"Wykonano kopię do pliku {fileName}";
+
+                        _messageBoxService.ShowInformationBox("Backup zakończony powodzeniem", "Sukces");
                     }
                 }
                 else
@@ -108,6 +96,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(CreateBackupAsync), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Błąd przy tworzeniu kopii");
             }
 
@@ -115,10 +104,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         private Task CloseWindow(ICloseable window)
         {
-            if (window != null)
-            {
-                window.Close();
-            }
+            window?.Close();
 
             return Task.CompletedTask;
         }

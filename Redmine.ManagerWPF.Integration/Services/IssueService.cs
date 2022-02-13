@@ -1,13 +1,12 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Threading.Tasks;
+using AutoMapper;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Helpers;
 using Redmine.ManagerWPF.Integration.Models;
 using Redmine.Net.Api;
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Integration.Services
 {
@@ -41,19 +40,24 @@ namespace Redmine.ManagerWPF.Integration.Services
             });
         }
 
-        public Task<IEnumerable<JournalDto>> GetIssueJournals(IssueDto issue)
+        public Task<IssueDto> GetIssue(long issueOriginalId)
         {
             return Task.Run(() =>
             {
                 string host = SettingsHelper.GetUrl();
                 string apiKey = SettingsHelper.GetApiKey();
 
+                if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(apiKey))
+                    throw new ArgumentNullException();
+
                 var manager = new RedmineManager(host, apiKey);
 
-                var parametersForIssue = new NameValueCollection { { RedmineKeys.INCLUDE, RedmineKeys.JOURNALS }, { RedmineKeys.INCLUDE, RedmineKeys.RELATIONS } };
-                var redmineIssue = manager.GetObject<Redmine.Net.Api.Types.Issue>(issue.Id.ToString(), parametersForIssue);
+                var parameters = new NameValueCollection { };
+                var result = manager.GetObject<Redmine.Net.Api.Types.Issue>(issueOriginalId.ToString(), parameters);
 
-                return _mapper.Map<IEnumerable<JournalDto>>(redmineIssue.Journals);
+                var issues = _mapper.Map<IssueDto>(result);
+
+                return issues;
             });
         }
     }

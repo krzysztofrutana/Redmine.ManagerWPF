@@ -1,29 +1,29 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Threading.Tasks;
+using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
+using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Messages;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class AddIssueToProjectViewModel : ObservableObject
     {
-        public Models.Projects.ListItemModel SelectedProject { get; set; }
+        private Models.Projects.ListItemModel SelectedProject { get; set; }
         private Models.Issues.FormModel _issueFormModel;
 
         public Models.Issues.FormModel IssueFormModel
         {
-            get { return _issueFormModel; }
-            set { _issueFormModel = value; }
+            get => _issueFormModel;
+            set => _issueFormModel = value;
         }
 
         public IAsyncRelayCommand SaveIssueCommand { get; }
@@ -32,6 +32,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly ProjectService _projectService;
         private readonly IMessageBoxService _messageBoxService;
         private readonly IMapper _mapper;
+        private readonly ILogger<AddIssueToProjectViewModel> _logger;
 
         public AddIssueToProjectViewModel()
         {
@@ -39,6 +40,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
+            _logger = Ioc.Default.GetLoggerForType<AddIssueToProjectViewModel>();
 
             IssueFormModel = new Models.Issues.FormModel();
 
@@ -70,7 +72,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     }
                     else
                     {
-                        throw new Exception(String.Format("Nie znaleziono projektu o ID: {0}", SelectedProject.Id));
+                        _logger.LogDebug("{0} {1}", nameof(SaveIssueAsync), $"Nie znaleziono projektu o ID: {SelectedProject.Id}");
+                        throw new Exception($"Nie znaleziono projektu o ID: {SelectedProject.Id}");
                     }
 
                     var result = await _issueService.Create(entity);
@@ -80,6 +83,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
+                _logger.LogError("{0} {1}", nameof(SaveIssueAsync), ex.Message);
                 _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy zapisywaniu zadania");
             }
         }

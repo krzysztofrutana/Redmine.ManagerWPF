@@ -3,23 +3,19 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Text;
-using System.Threading;
 
 namespace Redmine.ManagerWPF.Desktop.Helpers
 {
-    public class AsyncObservableCollection<T> : ObservableCollection<T> where T : INotifyPropertyChanged
+    public class ExtendedObservableCollection<T> : ObservableCollection<T> where T : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler ItemPropertyChanged;
 
-        private SynchronizationContext _synchronizationContext = SynchronizationContext.Current;
-
-        public AsyncObservableCollection()
+        public ExtendedObservableCollection()
         {
             ObserveAll();
         }
 
-        public AsyncObservableCollection(IEnumerable<T> list)
+        public ExtendedObservableCollection(IEnumerable<T> list)
             : base(list)
         {
             ObserveAll();
@@ -27,43 +23,27 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
 
         protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
-            if (SynchronizationContext.Current == _synchronizationContext)
-            {
-                // Execute the CollectionChanged event on the current thread
-                RaiseCollectionChanged(e);
-            }
-            else
-            {
-                // Raises the CollectionChanged event on the creator thread
-                _synchronizationContext.Send(RaiseCollectionChanged, e);
-            }
+            RaiseCollectionChanged(e);
         }
 
         private void RaiseCollectionChanged(object param)
         {
-            try
-            {
-                var e = (NotifyCollectionChangedEventArgs)param;
-                if (e.Action == NotifyCollectionChangedAction.Remove ||
-                    e.Action == NotifyCollectionChangedAction.Replace)
-                {
-                    foreach (T item in e.OldItems)
-                        item.PropertyChanged -= ChildPropertyChanged;
-                }
 
-                if (e.Action == NotifyCollectionChangedAction.Add ||
-                    e.Action == NotifyCollectionChangedAction.Replace)
-                {
-                    foreach (T item in e.NewItems)
-                        item.PropertyChanged += ChildPropertyChanged;
-                }
-                base.OnCollectionChanged(e);
-            }
-            catch (Exception ex)
+            var e = (NotifyCollectionChangedEventArgs)param;
+            if (e.Action == NotifyCollectionChangedAction.Remove ||
+                e.Action == NotifyCollectionChangedAction.Replace)
             {
-
-                throw;
+                foreach (T item in e.OldItems)
+                    item.PropertyChanged -= ChildPropertyChanged;
             }
+
+            if (e.Action == NotifyCollectionChangedAction.Add ||
+                e.Action == NotifyCollectionChangedAction.Replace)
+            {
+                foreach (T item in e.NewItems)
+                    item.PropertyChanged += ChildPropertyChanged;
+            }
+            base.OnCollectionChanged(e);
 
         }
 
@@ -105,24 +85,7 @@ namespace Redmine.ManagerWPF.Desktop.Helpers
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            try
-            {
-                if (SynchronizationContext.Current == _synchronizationContext)
-                {
-                    // Execute the PropertyChanged event on the current thread
-                    RaisePropertyChanged(e);
-                }
-                else
-                {
-                    // Raises the PropertyChanged event on the creator thread
-                    _synchronizationContext.Send(RaisePropertyChanged, e);
-                }
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
+            RaisePropertyChanged(e);
         }
 
         private void RaisePropertyChanged(object param)

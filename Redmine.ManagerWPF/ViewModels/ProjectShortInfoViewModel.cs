@@ -18,8 +18,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         public ListItemModel SelectedProject
         {
-            get { return _selectedProject; }
-            set { SetProperty(ref _selectedProject, value); }
+            get => _selectedProject;
+            private set => SetProperty(ref _selectedProject, value);
         }
 
         public IRelayCommand OpenBrowserCommand { get; }
