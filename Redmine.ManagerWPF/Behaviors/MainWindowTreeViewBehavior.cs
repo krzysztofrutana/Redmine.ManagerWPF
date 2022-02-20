@@ -20,7 +20,7 @@ namespace Redmine.ManagerWPF.Desktop.Behaviors
         {
             var tv = sender as TreeView;
             if (tv == null) return;
-            var vm = tv.DataContext as MainWindowViewModel;
+            var vm = tv.DataContext as MainWindowTreeViewViewModel;
             if (vm == null) return;
             vm.SelectedNode = tv.SelectedItem as TreeModel;
         }

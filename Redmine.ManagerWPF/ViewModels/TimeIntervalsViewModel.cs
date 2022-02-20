@@ -25,7 +25,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class TimeIntervalsViewModel : ObservableRecipient
     {
-
+        #region Properties
         private Timer CurrentNodeTimer { get; set; }
 
         private TreeModel _node;
@@ -38,12 +38,16 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         }
 
         public ExtendedObservableCollection<ListItemModel> TimeIntervalsForNode { get; set; } = new ExtendedObservableCollection<ListItemModel>();
+        #endregion
 
+        #region Injections
         private readonly IMapper _mapper;
         private readonly TimeIntervalsService _timeIntervalsService;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<TimeIntervalsViewModel> _logger;
+        #endregion
 
+        #region Commands
         public IAsyncRelayCommand AddTimeIntervalAsyncCommand { get; }
         public IAsyncRelayCommand RemoveTimeIntervalAsyncCommand { get; }
         public IAsyncRelayCommand StartTimeIntervalAsyncCommand { get; }
@@ -51,12 +55,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IAsyncRelayCommand<ListItemModel> SaveTimeIntervalNoteCommand { get; }
         public IRelayCommand<ListItemModel> EditStartDateCommand { get; }
         public IRelayCommand<ListItemModel> EditEndDateCommand { get; }
-
+        #endregion
 
         public TimeIntervalsViewModel()
         {
             _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _logger = Ioc.Default.GetLoggerForType<TimeIntervalsViewModel>();
 
@@ -114,7 +118,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SaveTimeIntervalNodeAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy zapisywaniu notatki");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy zapisywaniu notatki");
             }
         }
 
@@ -135,7 +139,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy czasów");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy czasów");
             }
         }
 
@@ -215,7 +219,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(AddTimeIntervalAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy dodawaniu czasu");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy dodawaniu czasu");
             }
         }
 
@@ -240,7 +244,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(RemoveTimeIntervalAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy usuwaniu czasu");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy usuwaniu czasu");
             }
         }
 
@@ -250,7 +254,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 if (await _timeIntervalsService.CheckIfAnyStartedTimeIntervalExistAsync())
                 {
-                    _messageBoxService.ShowWarningInfoBox("Istnieje inne niezakończone zadanie!", "Uwaga");
+                    _messageBoxHelper.ShowWarningInfoBox("Istnieje inne niezakończone zadanie!", "Uwaga");
                     return;
                 }
 
@@ -273,7 +277,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(StartTimeIntervalAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy starcie czasu");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy starcie czasu");
             }
         }
 
@@ -301,7 +305,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(StartTimeIntervalAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy stopie czasu");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy stopie czasu");
             }
         }
 

@@ -17,6 +17,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class SearchWindowViewModel : ObservableRecipient
     {
+        #region Properties
         public ObservableCollection<Models.Tree.TreeModel> Issues { get; private set; } = new ExtendedObservableCollection<Models.Tree.TreeModel>();
 
         public Models.Projects.ListItemModel Project { get => _project; set => SetProperty(ref _project, value); }
@@ -81,17 +82,20 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _viewCommentDetails;
             set => SetProperty(ref _viewCommentDetails, value);
         }
+        #endregion
 
+        #region Injections
         private readonly IMapper _mapper;
         private readonly IssueService _issueService;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<SearchWindowViewModel> _logger;
+        #endregion
 
         public SearchWindowViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<SearchWindowViewModel>();
 
             WeakReferenceMessenger.Default.Register<SelectedProjectMessage>(this, (r, m) =>
@@ -119,7 +123,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SearchIssues), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadań");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadań");
             }
         }
     }

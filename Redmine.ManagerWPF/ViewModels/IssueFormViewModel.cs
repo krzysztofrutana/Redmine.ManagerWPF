@@ -18,6 +18,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class IssueFormViewModel : ObservableRecipient
     {
+        #region Properties
         private TreeModel _node;
 
         private TreeModel Node
@@ -33,21 +34,26 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _issueFormModel;
             private set => SetProperty(ref _issueFormModel, value);
         }
+        #endregion
 
+        #region Injections
         private readonly IssueService _issueService;
         private readonly IMapper _mapper;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<IssueFormViewModel> _logger;
+        #endregion
 
+        #region Commands
         public IRelayCommand OpenBrowserCommand { get; }
         public IAsyncRelayCommand SetAsDoneCommand { get; }
         public IAsyncRelayCommand SetAsUndoneCommand { get; }
+        #endregion
 
         public IssueFormViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<IssueFormViewModel>();
 
             WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
@@ -74,7 +80,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadania");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadania");
             }
         }
 
@@ -96,7 +102,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SetAsDone), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako zakończone");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako zakończone");
             }
         }
 
@@ -118,7 +124,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SetAsUndone), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako niezakończone");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako niezakończone");
             }
         }
 

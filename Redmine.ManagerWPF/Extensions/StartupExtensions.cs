@@ -56,7 +56,7 @@ namespace Redmine.ManagerWPF.Desktop.Extensions
 
         public static IServiceCollection RegisterMessageBoxService(this IServiceCollection services)
         {
-            services.AddTransient<IMessageBoxService, MessageBoxService>();
+            services.AddTransient<IMessageBoxHelper, MessageBoxHelper>();
 
             return services;
         }

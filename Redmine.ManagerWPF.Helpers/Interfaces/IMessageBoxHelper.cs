@@ -1,6 +1,6 @@
 ﻿namespace Redmine.ManagerWPF.Helpers.Interfaces
 {
-    public interface IMessageBoxService
+    public interface IMessageBoxHelper
     {
         void ShowWarningInfoBox(string text, string caption);
 

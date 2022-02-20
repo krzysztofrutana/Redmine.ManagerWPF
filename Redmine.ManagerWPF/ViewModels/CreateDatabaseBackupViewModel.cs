@@ -15,7 +15,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class CreateDatabaseBackupViewModel : ObservableObject
     {
-
+        #region Properties
         private string _folderPath;
 
         public string FolderPath
@@ -31,17 +31,22 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _information;
             private set => SetProperty(ref _information, value);
         }
+        #endregion
 
+        #region Injections
+        private readonly IMessageBoxHelper _messageBoxHelper;
+        private readonly ILogger<CreateDatabaseBackupViewModel> _logger;
+        #endregion
+
+        #region Commands
         public IAsyncRelayCommand<ICloseable> CloseWindowCommand { get; }
         public IAsyncRelayCommand CreateBackupCommand { get; }
         public IRelayCommand OpenFolderPickerDialogCommand { get; }
-
-        private readonly IMessageBoxService _messageBoxService;
-        private readonly ILogger<CreateDatabaseBackupViewModel> _logger;
+        #endregion
 
         public CreateDatabaseBackupViewModel()
         {
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<CreateDatabaseBackupViewModel>();
 
             CloseWindowCommand = new AsyncRelayCommand<ICloseable>(CloseWindow);
@@ -85,19 +90,19 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                         Information = $"Wykonano kopię do pliku {fileName}";
 
-                        _messageBoxService.ShowInformationBox("Backup zakończony powodzeniem", "Sukces");
+                        _messageBoxHelper.ShowInformationBox("Backup zakończony powodzeniem", "Sukces");
                     }
                 }
                 else
                 {
-                    _messageBoxService.ShowWarningInfoBox("Nie wybrano folderu, backup niemożliwy", "Uwaga");
+                    _messageBoxHelper.ShowWarningInfoBox("Nie wybrano folderu, backup niemożliwy", "Uwaga");
                 }
 
             }
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(CreateBackupAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Błąd przy tworzeniu kopii");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Błąd przy tworzeniu kopii");
             }
 
         }

@@ -17,28 +17,29 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class AddIssueToProjectViewModel : ObservableObject
     {
+        #region Properties
         private Models.Projects.ListItemModel SelectedProject { get; set; }
-        private Models.Issues.FormModel _issueFormModel;
 
-        public Models.Issues.FormModel IssueFormModel
-        {
-            get => _issueFormModel;
-            set => _issueFormModel = value;
-        }
+        public Models.Issues.FormModel IssueFormModel { get; set; }
+        #endregion
 
-        public IAsyncRelayCommand SaveIssueCommand { get; }
-
+        #region Injections
         private readonly IssueService _issueService;
         private readonly ProjectService _projectService;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly IMapper _mapper;
         private readonly ILogger<AddIssueToProjectViewModel> _logger;
+        #endregion
+
+        #region Commands
+        public IAsyncRelayCommand SaveIssueCommand { get; }
+        #endregion
 
         public AddIssueToProjectViewModel()
         {
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _logger = Ioc.Default.GetLoggerForType<AddIssueToProjectViewModel>();
 
@@ -84,7 +85,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SaveIssueAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy zapisywaniu zadania");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy zapisywaniu zadania");
             }
         }
     }

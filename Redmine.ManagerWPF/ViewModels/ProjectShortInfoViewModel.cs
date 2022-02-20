@@ -14,6 +14,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class ProjectShortInfoViewModel : ObservableRecipient
     {
+        #region Properties
         private ListItemModel _selectedProject;
 
         public ListItemModel SelectedProject
@@ -21,8 +22,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _selectedProject;
             private set => SetProperty(ref _selectedProject, value);
         }
+        #endregion
 
+        #region Commands
         public IRelayCommand OpenBrowserCommand { get; }
+        #endregion
 
         public ProjectShortInfoViewModel()
         {

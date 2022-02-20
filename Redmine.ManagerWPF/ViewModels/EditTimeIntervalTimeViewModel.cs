@@ -16,6 +16,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class EditTimeIntervalTimeViewModel : ObservableObject
     {
+        #region Properties
         private ListItemModel _selectedTimeInterval;
 
         private ListItemModel SelectedTimeInterval
@@ -47,19 +48,23 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _isError;
             set => SetProperty(ref _isError, value);
         }
+        #endregion
 
+        #region Injections
+        private readonly TimeIntervalsService _timeIntervalsService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
+        private readonly ILogger<EditTimeIntervalTimeViewModel> _logger;
+        #endregion
 
+        #region Commands
         public IAsyncRelayCommand<ICloseable> SaveTimeIntervalCommand { get; }
         public IRelayCommand<ICloseable> CloseDialogCommand { get; }
-
-        private readonly TimeIntervalsService _timeIntervalsService;
-        private readonly IMessageBoxService _messageBoxService;
-        private readonly ILogger<EditTimeIntervalTimeViewModel> _logger;
+        #endregion
 
         public EditTimeIntervalTimeViewModel()
         {
             _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<EditTimeIntervalTimeViewModel>();
 
             SaveTimeIntervalCommand = new AsyncRelayCommand<ICloseable>(SaveTimeIntervalAsync);
@@ -128,13 +133,13 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     }
                     else
                     {
-                        _messageBoxService.ShowWarningInfoBox("Nie znaleziono wpisu w bazie danych", "Błąd");
+                        _messageBoxHelper.ShowWarningInfoBox("Nie znaleziono wpisu w bazie danych", "Błąd");
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError("{0} {1}", nameof(SaveTimeIntervalAsync), ex.Message);
-                    _messageBoxService.ShowWarningInfoBox(ex.Message, "Edycja czasu nieudana");
+                    _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Edycja czasu nieudana");
                 }
 
             }

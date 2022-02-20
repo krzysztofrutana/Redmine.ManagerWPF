@@ -3,7 +3,7 @@ using Redmine.ManagerWPF.Helpers.Interfaces;
 
 namespace Redmine.ManagerWPF.Desktop.Helpers
 {
-    public class MessageBoxService : IMessageBoxService
+    public class MessageBoxHelper : IMessageBoxHelper
     {
         public void ShowWarningInfoBox(string text, string caption)
         {

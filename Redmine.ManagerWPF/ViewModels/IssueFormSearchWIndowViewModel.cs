@@ -16,6 +16,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class IssueFormSearchWindowViewModel : ObservableRecipient
     {
+        #region Properties
         private TreeModel _node;
 
         private TreeModel Node
@@ -31,19 +32,24 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _issueFormModel;
             set => SetProperty(ref _issueFormModel, value);
         }
+        #endregion
 
+        #region Injections
         private readonly IssueService _issueService;
         private readonly IMapper _mapper;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<IssueFormSearchWindowViewModel> _logger;
+        #endregion
 
+        #region Commands
         public IRelayCommand OpenBrowserCommand { get; }
+        #endregion
 
         public IssueFormSearchWindowViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<IssueFormSearchWindowViewModel>();
 
             WeakReferenceMessenger.Default.Register<SearchNodeChangeMessage>(this, (r, m) =>
@@ -69,7 +75,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (System.Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadania");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu zadania");
             }
         }
 

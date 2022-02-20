@@ -17,6 +17,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class CommentSearchWindowFormViewModel : ObservableRecipient
     {
+        #region Properties
         private TreeModel _node;
 
         private TreeModel Node
@@ -32,19 +33,24 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _commentFormModel;
             private set => SetProperty(ref _commentFormModel, value);
         }
+        #endregion
 
+        #region Injections
         private readonly CommentService _commentService;
         private readonly IMapper _mapper;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<CommentSearchWindowFormViewModel> _logger;
+        #endregion
 
+        #region Commands
         public IRelayCommand OpenBrowserCommand { get; }
+        #endregion
 
         public CommentSearchWindowFormViewModel()
         {
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _commentService = Ioc.Default.GetRequiredService<CommentService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<CommentSearchWindowFormViewModel>();
 
             WeakReferenceMessenger.Default.Register<SearchNodeChangeMessage>(this, (r, m) =>
@@ -69,7 +75,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(ReceiveNode), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu komentarza");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu komentarza");
             }
         }
 

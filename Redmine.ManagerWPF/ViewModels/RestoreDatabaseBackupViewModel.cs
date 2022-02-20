@@ -16,7 +16,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class RestoreDatabaseBackupViewModel : ObservableObject
     {
-
+        #region Properties
         private string _filePath;
 
         public string FilePath
@@ -32,19 +32,22 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _information;
             private set => SetProperty(ref _information, value);
         }
+        #endregion
 
+        #region Commands
         public IRelayCommand<ICloseable> CloseWindowCommand { get; }
         public IAsyncRelayCommand RestoreBackupCommand { get; }
         public IRelayCommand OpenFilePickerDialogCommand { get; }
+        #endregion
 
 
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly IMapper _mapper;
         private readonly ILogger<RestoreDatabaseBackupViewModel> _logger;
 
         public RestoreDatabaseBackupViewModel()
         {
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _mapper = Ioc.Default.GetRequiredService<IMapper>();
             _logger = Ioc.Default.GetLoggerForType<RestoreDatabaseBackupViewModel>();
 
@@ -106,18 +109,18 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                         Information = $"Przywrócono kopię z pliku {Path.GetFileName(FilePath)}. W celu pobrania nadpisanych danych proszę zrestartować aplikację";
 
-                        _messageBoxService.ShowInformationBox("Przywracanie zakończone powodzeniem, Zrestartuj aplikację", "Sukces");
+                        _messageBoxHelper.ShowInformationBox("Przywracanie zakończone powodzeniem, Zrestartuj aplikację", "Sukces");
                     }
                 }
                 else
                 {
-                    _messageBoxService.ShowWarningInfoBox("Nie wybrano pliku, przywrócenie niemożliwe", "Uwaga");
+                    _messageBoxHelper.ShowWarningInfoBox("Nie wybrano pliku, przywrócenie niemożliwe", "Uwaga");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(RestoreBackupAsync), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Błąd przy przywracaniu kopii");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Błąd przy przywracaniu kopii");
             }
 
         }

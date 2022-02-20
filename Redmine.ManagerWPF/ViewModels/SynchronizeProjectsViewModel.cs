@@ -14,9 +14,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class SynchronizeProjectsViewModel : ObservableRecipient
     {
-        private readonly ProjectService _projectService;
-        private readonly Integration.Services.ProjectService _integrationProjectService;
-
+        #region Properties
         private int _totalProjectsCount;
 
         public int TotalProjectsCount
@@ -64,18 +62,25 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get => _cancelButtonText;
             private set => SetProperty(ref _cancelButtonText, value);
         }
+        #endregion
 
+        #region Injections
+        private readonly ProjectService _projectService;
+        private readonly Integration.Services.ProjectService _integrationProjectService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
+        private readonly ILogger<SynchronizeProjectsViewModel> _logger;
+        #endregion
+
+        #region Commands
         public IAsyncRelayCommand SynchronizeProjectsCommand { get; }
         public IRelayCommand<ICloseable> CancelCommand { get; }
-
-        private readonly IMessageBoxService _messageBoxService;
-        private readonly ILogger<SynchronizeProjectsViewModel> _logger;
+        #endregion
 
         public SynchronizeProjectsViewModel()
         {
             _projectService = Ioc.Default.GetRequiredService<ProjectService>();
             _integrationProjectService = Ioc.Default.GetRequiredService<Integration.Services.ProjectService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<SynchronizeProjectsViewModel>();
 
             CancelButtonText = "Zamknij";
@@ -110,12 +115,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 _logger.LogError("{0} {1}", nameof(SynchronizeProject), ex.Message);
                 CancelButtonText = "Kliknij by zamknąć";
-                _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
+                _messageBoxHelper.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SynchronizeProject), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji projektów");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji projektów");
             }
         }
 

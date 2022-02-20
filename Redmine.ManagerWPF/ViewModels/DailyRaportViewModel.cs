@@ -17,6 +17,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class DailyRaportViewModel : ObservableRecipient
     {
+        #region Properties
         private bool _dataLoading;
 
         public bool DataLoading
@@ -38,18 +39,19 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-
         public ExtendedObservableCollection<ProjectListItemModel> RaportData { get; set; } = new ExtendedObservableCollection<ProjectListItemModel>();
+        #endregion
 
-
+        #region Injections
         private readonly TimeIntervalsService _timeIntervalsService;
-        private readonly IMessageBoxService _messageBoxService;
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<DailyRaportViewModel> _logger;
+        #endregion
 
         public DailyRaportViewModel()
         {
             _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<DailyRaportViewModel>();
 
             Date = DateTime.Now.Date;
@@ -69,12 +71,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             catch (ArgumentException ex)
             {
                 _logger.LogError("{0} {1}", nameof(LoadRaportData), ex.Message);
-                _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
+                _messageBoxHelper.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(LoadRaportData), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Nie udało się utworzyć raportu");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Nie udało się utworzyć raportu");
             }
             finally
             {

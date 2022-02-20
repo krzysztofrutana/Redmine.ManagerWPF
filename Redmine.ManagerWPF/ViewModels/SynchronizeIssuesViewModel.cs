@@ -16,6 +16,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class SynchronizeIssuesViewModel : ObservableRecipient
     {
+        #region Properties
         private string _totalIssuesCount;
 
         public string TotalIssuesCount
@@ -87,21 +88,26 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             get { return _cancelButtonText; }
             set { SetProperty(ref _cancelButtonText, value); }
         }
+        #endregion
 
-        private readonly IMessageBoxService _messageBoxService;
+        #region Injections
+        private readonly IMessageBoxHelper _messageBoxHelper;
         private readonly ILogger<SynchronizeIssuesViewModel> _logger;
         private readonly IssueService _issueService;
         private readonly Integration.Services.IssueService _integrationIssueService;
         private readonly Integration.Services.JournalService _integrationJournalService;
+        #endregion
 
+        #region Commands
         public IAsyncRelayCommand SynchronizeIssuesCommand { get; }
         public IRelayCommand<ICloseable> CancelCommand { get; }
+        #endregion
 
         public SynchronizeIssuesViewModel()
         {
             _issueService = Ioc.Default.GetRequiredService<IssueService>();
             _integrationIssueService = Ioc.Default.GetRequiredService<Integration.Services.IssueService>();
-            _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+            _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<SynchronizeIssuesViewModel>();
             _integrationJournalService = Ioc.Default.GetRequiredService<Integration.Services.JournalService>();
 
@@ -164,12 +170,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 _logger.LogError("{0} {1}", nameof(SynchronizeIssues), ex.Message);
                 CancelButtonText = "Kliknij by zamknąć";
-                _messageBoxService.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
+                _messageBoxHelper.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
                 _logger.LogError("{0} {1}", nameof(SynchronizeIssues), ex.Message);
-                _messageBoxService.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji zadań");
+                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji zadań");
             }
         }
 

@@ -27,7 +27,7 @@ namespace Redmine.ManagerWPF.Views
 
             if (await _timeIntervalService.CheckIfAnyStartedTimeIntervalExistAsync())
             {
-                var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+                var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
                 _messageBoxService.ShowWarningInfoBox("Proszę zakończyć wszystkie zadania!", "Uwaga");
                 return;
             }
@@ -49,7 +49,7 @@ namespace Redmine.ManagerWPF.Views
 
             if (_timeIntervalService.CheckIfAnyStartedTimeIntervalExist())
             {
-                var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxService>();
+                var _messageBoxService = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
                 _messageBoxService.ShowWarningInfoBox("Proszę zakończyć wszystkie zadania!", "Uwaga");
                 e.Cancel = true;
             }

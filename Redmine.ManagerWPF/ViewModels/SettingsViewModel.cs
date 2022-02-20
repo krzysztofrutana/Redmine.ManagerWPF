@@ -12,6 +12,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 {
     public class SettingsViewModel : ObservableObject
     {
+        #region Properties
         private SettingsModel _currentSettings;
 
         public SettingsModel CurrentSettings
@@ -37,13 +38,18 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             set => SetProperty(ref _connected, value);
         }
+        #endregion
 
+        #region Injections
+        private readonly DatabaseManager _databaseManager;
+        private readonly ILogger<SettingsViewModel> _logger;
+        #endregion
+
+        #region Commands
         public IRelayCommand SaveSettingsCommand { get; }
         public IRelayCommand ConnectionTestCommand { get; }
         public IRelayCommand CreateDatabaseCommand { get; }
-
-        private readonly DatabaseManager _databaseManager;
-        private readonly ILogger<SettingsViewModel> _logger;
+        #endregion
 
         public SettingsViewModel()
         {
