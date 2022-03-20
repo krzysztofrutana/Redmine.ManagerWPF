@@ -1,0 +1,56 @@
+﻿<ui:ContentDialog
+    x:Class="Redmine.ManagerWPF.Desktop.Views.ContentDialogs.BreakReason"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
+    x:Name="BreakReasonDialog"
+    Title="Powód przerwy"
+    d:DesignHeight="200"
+    d:DesignWidth="400"
+    mc:Ignorable="d"
+    SecondaryButtonText="Nieważne">
+    <ui:ContentDialog.DataContext>
+        <vm:BreakReasonViewModel />
+    </ui:ContentDialog.DataContext>
+    <ui:ContentDialog.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </ui:ContentDialog.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding ElapsedTimeString}" Grid.ColumnSpan="2"/>
+        <CheckBox Margin="0,10,0,0" Grid.Row="1" Grid.ColumnSpan="2" IsChecked="{Binding OtherReasonCheckBox, Mode=TwoWay}" Content="Inny powód"/>
+        <TextBox Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding OtherReason}"             
+                   Visibility="{Binding OtherReasonCheckBox, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        <Button 
+            Margin="0,10,0,0" 
+            HorizontalAlignment="Left" 
+            Grid.Row="3" 
+            Grid.Column="0" 
+            Content="Inny powód" 
+            Command="{Binding OtherReasonCommand}" 
+            CommandParameter="{Binding ElementName=BreakReasonDialog}" />
+        <Button 
+            Margin="0,10,0,0" 
+            HorizontalAlignment="Right" 
+            Grid.Row="3" 
+            Grid.Column="2" 
+            Content="Przerwa" 
+            Command="{Binding BreakCommand}" 
+            CommandParameter="{Binding ElementName=BreakReasonDialog}" />
+
+    </Grid>
+</ui:ContentDialog>

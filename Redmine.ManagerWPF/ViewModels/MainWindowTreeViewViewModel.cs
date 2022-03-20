@@ -145,7 +145,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         {
             if (value == null) return;
             var issue = _mapper.Map<Models.Tree.TreeModel>(value);
-            Issues.Add(issue);
+            if (Issues.FirstOrDefault(x => x.Id == issue.Id) == null)
+                Issues.Add(issue);
         }
 
         private void ChangeSelectedAsDone(TreeModel value)

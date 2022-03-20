@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,6 +13,7 @@ using Microsoft.Win32;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Helpers;
+using Redmine.ManagerWPF.Desktop.Messages.BreakReason;
 using Redmine.ManagerWPF.Desktop.Messages.MainWindowTreeView;
 using Redmine.ManagerWPF.Desktop.Messages.ProjectCombobox;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
@@ -88,6 +90,10 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         }
         #endregion
 
+        #region Private fields
+        private Stopwatch _timer;
+        #endregion
+
         #region Injections
         private readonly IMapper _mapper;
         private readonly ProjectService _projectService;
@@ -143,15 +149,29 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             SystemEvents.SessionSwitch += new SessionSwitchEventHandler(SystemEvents_SessionSwitch);
         }
 
-        private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        private async void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
         {
             if (e.Reason == SessionSwitchReason.SessionLock)
             {
-                _logger.LogDebug("Block PC");
+                if (SelectedProject != null || await _timeIntervalsService.CheckIfAnyStartedTimeIntervalExistAsync())
+                {
+                    _timer = new Stopwatch();
+                    _timer.Start();
+                }
             }
             else if (e.Reason == SessionSwitchReason.SessionUnlock)
             {
-                _logger.LogDebug("Unlock PC");
+                if (_timer != null)
+                {
+                    _timer.Stop();
+                    if (_timer.ElapsedMilliseconds > 1000 * 60 * 5 && (SelectedProject != null || await _timeIntervalsService.CheckIfAnyStartedTimeIntervalExistAsync()))
+                    {
+                        var dialog = new BreakReason();
+                        dialog.ShowAsync();
+                        WeakReferenceMessenger.Default.Send(new BreakReasonTimeMessage(_timer.Elapsed));
+                        _timer.Reset();
+                    }
+                }
             }
         }
 

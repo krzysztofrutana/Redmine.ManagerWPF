@@ -24,6 +24,23 @@ namespace Redmine.ManagerWPF.Desktop.Services
             _commentService = commentService;
         }
 
+        public async Task<TimeInterval> CreateAsync(TimeInterval timeInterval)
+        {
+            if (timeInterval == null)
+            {
+                throw new ArgumentNullException(nameof(timeInterval));
+            }
+
+            using var context = await _context.GetConnectionAsync();
+
+            var id = await context.InsertAsync(timeInterval);
+            if (id.HasValue)
+            {
+                timeInterval.Id = id.Value;
+            }
+
+            return timeInterval;
+        }
         public async Task CreateAsync(TreeModel treeModel, DateTime start, DateTime end)
         {
             using var context = await _context.GetConnectionAsync();

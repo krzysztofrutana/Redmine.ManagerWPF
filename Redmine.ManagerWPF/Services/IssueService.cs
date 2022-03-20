@@ -93,6 +93,15 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return await context.GetAsync<Issue>(id);
         }
 
+        public async Task<Issue> GetIssueByProjectAndNameAsync(int projectId, string name)
+        {
+            using var context = await _context.GetConnectionAsync();
+
+            var query = "SELECT * FROM [dbo].[Issues] WHERE Name = @name AND ProjectId = @projectId";
+
+            return await context.QueryFirstOrDefaultAsync<Issue>(query, new { name = name, projectId = projectId });
+        }
+
 
         public async Task<Issue> GetIssueWithTimeIntervalAsync(int id)
         {
