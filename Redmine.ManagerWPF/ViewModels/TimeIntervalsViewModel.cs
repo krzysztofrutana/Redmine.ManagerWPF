@@ -14,7 +14,8 @@ using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Helpers;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.Forms;
+using Redmine.ManagerWPF.Desktop.Messages.TimeIntervalList;
 using Redmine.ManagerWPF.Desktop.Models.TimeIntervals;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
@@ -130,7 +131,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 TimeIntervalsForNode.Clear();
 
-                var times = await GetTimeInteralForType(Node.Type);
+                var times = await GetTimeInteralForTypeAsync(Node.Type);
 
                 if (!times.Any()) return;
 
@@ -143,7 +144,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        private async Task<List<ListItemModel>> GetTimeInteralForType(string type)
+        private async Task<List<ListItemModel>> GetTimeInteralForTypeAsync(string type)
         {
             if (type == nameof(Issue))
             {

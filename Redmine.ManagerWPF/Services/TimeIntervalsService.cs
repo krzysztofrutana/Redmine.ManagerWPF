@@ -154,6 +154,26 @@ namespace Redmine.ManagerWPF.Desktop.Services
             return comments.Any();
         }
 
+        public async Task<TimeInterval> GetActualAsync()
+        {
+            using var context = await _context.GetConnectionAsync();
+
+            var query = @"SELECT * FROM [dbo].[TimeIntervals] timeIntervals
+                          LEFT JOIN [dbo].[Issues] issues ON timeIntervals.IssueId = issues.Id
+						  LEFT JOIN [dbo].[Comments] comments ON timeIntervals.CommentId = comments.Id
+                          WHERE timeIntervals.[TimeIntervalStart] IS NOT NULL AND timeIntervals.[TimeIntervalEnd] IS NULL";
+
+            var timeIntervals = await context.QueryAsync<TimeInterval, Issue, Comment, TimeInterval>(query, (timeInterval, issue, comment) =>
+            {
+                timeInterval.Issue = issue;
+                timeInterval.Comment = comment;
+                return timeInterval;
+            },
+             new { });
+
+            return timeIntervals.FirstOrDefault();
+        }
+
         public async Task<List<TimeInterval>> GetFinishedForCurrentDateAsync(DateTime date)
         {
             using var context = await _context.GetConnectionAsync();

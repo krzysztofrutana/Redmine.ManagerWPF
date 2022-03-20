@@ -1,9 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging.Messages;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Redmine.ManagerWPF.Desktop.Messages
+namespace Redmine.ManagerWPF.Desktop.Messages.ControlButtonsMainWindow
 {
     public class AddIssueToProjectMessage : ValueChangedMessage<Data.Models.Issue>
     {

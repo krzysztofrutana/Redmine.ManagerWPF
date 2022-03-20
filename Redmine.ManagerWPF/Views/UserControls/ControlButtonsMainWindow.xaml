@@ -1,0 +1,65 @@
+﻿<UserControl
+    x:Class="Redmine.ManagerWPF.Desktop.Views.UserControls.ControlButtonsMainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Redmine.ManagerWPF.Desktop.Views.UserControls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Redmine.ManagerWPF.Desktop.ViewModels"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <UserControl.DataContext>
+        <vm:ControlButtonsMainWindowViewModel />
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <BitmapImage x:Key="Add" UriSource="/Resources/add.png" />
+        <BitmapImage x:Key="Trash" UriSource="/Resources/bin.png" />
+        <BitmapImage x:Key="Actual" UriSource="/Resources/actual.png" />
+    </UserControl.Resources>
+
+    <Grid
+        Grid.Row="4"
+        Grid.Column="0"
+        Margin="10,0,0,10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Button
+            Grid.Column="0"
+            MaxWidth="30"
+            MaxHeight="30"
+            HorizontalAlignment="Center"
+            BorderThickness="0"
+            Command="{Binding AddIssueForProjectCommand}"
+            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Dodaj zadanie">
+            <Image Source="{StaticResource Add}" Stretch="Fill" />
+        </Button>
+        <Button
+            Grid.Column="1"
+            MaxWidth="30"
+            MaxHeight="30"
+            HorizontalAlignment="Center"
+            BorderThickness="0"
+            Command="{Binding DeleteIssueFromProjectCommand}"
+            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Usuń zaznaczone zadanie">
+            <Image Source="{StaticResource Trash}" Stretch="Fill" />
+        </Button>
+        <Button
+            Grid.Column="2"
+            MaxWidth="40"
+            MaxHeight="40"
+            HorizontalAlignment="Center"
+            BorderThickness="0"
+            Command="{Binding GoToActualCommand}"
+            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+            ToolTip="Przejdź do aktualnego zadania">
+            <Image Source="{StaticResource Actual}" Stretch="Fill" />
+        </Button>
+    </Grid>
+</UserControl>

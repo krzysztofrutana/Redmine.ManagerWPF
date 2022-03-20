@@ -9,6 +9,7 @@ namespace Redmine.ManagerWPF.Desktop.Models.Issues
         private string _description;
 
         public int Id { get; set; }
+        public int SourceId { get; set; }
         public string Name { get => _name; set => SetProperty(ref _name, value); }
         public string Description { get => _description; set => SetProperty(ref _description, value); }
         public string Link { get; set; }

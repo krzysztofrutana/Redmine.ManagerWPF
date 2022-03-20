@@ -9,7 +9,8 @@ using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Extensions;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.ControlButtonsMainWindow;
+using Redmine.ManagerWPF.Desktop.Messages.ProjectCombobox;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
 
@@ -47,7 +48,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             SaveIssueCommand = new AsyncRelayCommand(SaveIssueAsync);
 
-            WeakReferenceMessenger.Default.Register<SelectedProjectMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<SetSelectedProjectMessage>(this, (r, m) =>
             {
                 if (m.Value != null)
                 {

@@ -1,14 +1,9 @@
-﻿using AutoMapper;
+﻿using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.ProjectCombobox;
 using Redmine.ManagerWPF.Desktop.Models.Projects;
-using Redmine.ManagerWPF.Desktop.Services;
-using Redmine.ManagerWPF.Helpers.Interfaces;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.ViewModels
 {

@@ -8,7 +8,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Desktop.Extensions;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.Forms;
+using Redmine.ManagerWPF.Desktop.Messages.MainWindowTreeView;
 using Redmine.ManagerWPF.Desktop.Models.Issues;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
@@ -56,14 +57,14 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<IssueFormViewModel>();
 
+            OpenBrowserCommand = new RelayCommand(OpenBrowser);
+            SetAsDoneCommand = new AsyncRelayCommand(SetAsDoneAsync);
+            SetAsUndoneCommand = new AsyncRelayCommand(SetAsUndoneAsync);
+
             WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
             {
                 ReceiveNode(m.Value);
             });
-
-            OpenBrowserCommand = new RelayCommand(OpenBrowser);
-            SetAsDoneCommand = new AsyncRelayCommand(SetAsDone);
-            SetAsUndoneCommand = new AsyncRelayCommand(SetAsUndone);
         }
 
         private async void ReceiveNode(TreeModel message)
@@ -84,7 +85,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        private async Task SetAsDone()
+        private async Task SetAsDoneAsync()
         {
             try
             {
@@ -101,12 +102,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(SetAsDone), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SetAsDoneAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako zakończone");
             }
         }
 
-        private async Task SetAsUndone()
+        private async Task SetAsUndoneAsync()
         {
             try
             {
@@ -123,7 +124,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(SetAsUndone), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SetAsUndoneAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako niezakończone");
             }
         }

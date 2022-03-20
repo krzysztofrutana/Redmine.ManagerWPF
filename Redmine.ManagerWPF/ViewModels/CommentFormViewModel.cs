@@ -8,7 +8,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Desktop.Extensions;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.Forms;
+using Redmine.ManagerWPF.Desktop.Messages.MainWindowTreeView;
 using Redmine.ManagerWPF.Desktop.Models.Comments;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
@@ -63,8 +64,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             OpenBrowserCommand = new RelayCommand(OpenBrowser);
 
-            SetAsDoneCommand = new AsyncRelayCommand(SetAsDone);
-            SetAsUndoneCommand = new AsyncRelayCommand(SetAsUndone);
+            SetAsDoneCommand = new AsyncRelayCommand(SetAsDoneAsync);
+            SetAsUndoneCommand = new AsyncRelayCommand(SetAsUndoneAsync);
         }
 
         private async void ReceiveNode(TreeModel message)
@@ -87,48 +88,48 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
         }
 
-        private async Task SetAsDone()
+        private async Task SetAsDoneAsync()
         {
             try
             {
                 Node.Done = true;
                 CommentFormModel.Done = true;
                 CommentFormModel.Status = "Wykonane";
-                var issue = await _commentService.GetCommentAsync(Node.Id);
-                if (issue != null)
+                var comment = await _commentService.GetCommentAsync(Node.Id);
+                if (comment != null)
                 {
-                    issue.Done = true;
-                    await _commentService.Update(issue);
+                    comment.Done = true;
+                    await _commentService.Update(comment);
 
                     WeakReferenceMessenger.Default.Send(new ChangeSelectedCommentDoneStatus(Node));
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(SetAsDone), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SetAsDoneAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako zakończone");
             }
         }
 
-        private async Task SetAsUndone()
+        private async Task SetAsUndoneAsync()
         {
             try
             {
                 Node.Done = false;
                 CommentFormModel.Done = false;
                 CommentFormModel.Status = "Niewykonane";
-                var issue = await _commentService.GetCommentAsync(Node.Id);
-                if (issue != null)
+                var comment = await _commentService.GetCommentAsync(Node.Id);
+                if (comment != null)
                 {
-                    issue.Done = false;
-                    await _commentService.Update(issue);
+                    comment.Done = false;
+                    await _commentService.Update(comment);
 
                     WeakReferenceMessenger.Default.Send(new ChangeSelectedCommentDoneStatus(Node));
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(SetAsUndone), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SetAsUndoneAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy oznaczaniu jako niezakończone");
             }
         }

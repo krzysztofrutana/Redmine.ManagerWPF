@@ -86,11 +86,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             CancelButtonText = "Zamknij";
             PrimaryButtonText = "Rozpocznij";
 
-            SynchronizeProjectsCommand = new AsyncRelayCommand(SynchronizeProject);
+            SynchronizeProjectsCommand = new AsyncRelayCommand(SynchronizeProjectAsync);
             CancelCommand = new RelayCommand<ICloseable>(Cancel);
         }
 
-        private async Task SynchronizeProject(CancellationToken token)
+        private async Task SynchronizeProjectAsync(CancellationToken token)
         {
             try
             {
@@ -113,13 +113,13 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError("{0} {1}", nameof(SynchronizeProject), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SynchronizeProjectAsync), ex.Message);
                 CancelButtonText = "Kliknij by zamknąć";
                 _messageBoxHelper.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(SynchronizeProject), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SynchronizeProjectAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji projektów");
             }
         }

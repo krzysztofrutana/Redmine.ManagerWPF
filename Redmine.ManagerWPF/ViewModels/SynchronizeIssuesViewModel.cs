@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Desktop.Extensions;
+using Redmine.ManagerWPF.Desktop.Messages.MainWindowTreeView;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
 
@@ -114,11 +116,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             CancelButtonText = "Zamknij";
             PrimaryButtonText = "Rozpocznij";
 
-            SynchronizeIssuesCommand = new AsyncRelayCommand(SynchronizeIssues);
+            SynchronizeIssuesCommand = new AsyncRelayCommand(SynchronizeIssuesAsync);
             CancelCommand = new RelayCommand<ICloseable>(Cancel);
         }
 
-        public async Task SynchronizeIssues(CancellationToken token)
+        public async Task SynchronizeIssuesAsync(CancellationToken token)
         {
             try
             {
@@ -165,16 +167,18 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                 }
 
                 SetStatus(SynchronizeIssueStatusType.AllDone);
+
+                WeakReferenceMessenger.Default.Send(new ReloadTreeMessage(new Models.Tree.TreeModel()));
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError("{0} {1}", nameof(SynchronizeIssues), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SynchronizeIssuesAsync), ex.Message);
                 CancelButtonText = "Kliknij by zamknąć";
                 _messageBoxHelper.ShowWarningInfoBox("Nie skonfigurowano połączenia do bazy danych", "Błąd");
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(SynchronizeIssues), ex.Message);
+                _logger.LogError("{0} {1}", nameof(SynchronizeIssuesAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy synchronizacji zadań");
             }
         }

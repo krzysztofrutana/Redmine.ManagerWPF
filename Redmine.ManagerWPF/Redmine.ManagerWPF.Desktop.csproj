@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <None Remove="Icons\logo.ico" />
+    <None Remove="Resources\actual.png" />
     <None Remove="Resources\add.png" />
     <None Remove="Resources\bin.png" />
     <None Remove="Resources\browser.png" />
@@ -131,6 +132,9 @@
 
   <ItemGroup>
     <Resource Include="Icons\logo.ico" />
+    <Resource Include="Resources\actual.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Resources\add.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>

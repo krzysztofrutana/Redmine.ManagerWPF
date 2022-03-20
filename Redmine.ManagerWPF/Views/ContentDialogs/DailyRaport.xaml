@@ -50,6 +50,25 @@
             FontSize="12"
             ItemsSource="{Binding RaportData}"
             Visibility="{Binding DataLoading, Converter={StaticResource InvertBooleanToVisibilityConverter}}">
+            <TreeView.ItemContainerStyle>
+                <Style BasedOn="{StaticResource {x:Type TreeViewItem}}" TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type TreeView}}}" />
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem
+                                    Command="{Binding PlacementTarget.Tag.CopyNoteToClipboardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}"
+                                    Header="Kopiuj notatkę" />
+                                <MenuItem
+                                    Command="{Binding PlacementTarget.Tag.CopyTimeToClipboardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}"
+                                    Header="Kopiuj czas całkowity" />
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type dailyRaports:ProjectListItemModel}" ItemsSource="{Binding Childrens}">
                     <Grid>
@@ -146,6 +165,7 @@
                                 Grid.Row="2"
                                 Grid.Column="0"
                                 Margin="0,10,0,0"
+                                HorizontalAlignment="Stretch"
                                 Orientation="Horizontal"
                                 Visibility="{Binding Note, Converter={StaticResource StringToVIsibilityConverter}}">
                                 <TextBlock
@@ -153,9 +173,11 @@
                                     FontWeight="SemiBold"
                                     Text="Notatka:" />
                                 <TextBlock
+                                    MaxWidth="300"
                                     Margin="5,0,0,0"
                                     FontSize="12"
-                                    Text="{Binding Note}" />
+                                    Text="{Binding Note}"
+                                    TextWrapping="Wrap" />
                             </StackPanel>
 
                         </Grid>

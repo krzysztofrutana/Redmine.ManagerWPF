@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -9,11 +8,12 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
-using Redmine.ManagerWPF.Data.Enums;
 using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Helpers;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.MainWindowTreeView;
+using Redmine.ManagerWPF.Desktop.Messages.ProjectCombobox;
 using Redmine.ManagerWPF.Desktop.Models.Tree;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Desktop.Views.ContentDialogs;
@@ -44,17 +44,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
                 ViewProjectDetails = value != null;
                 ViewIssuesList = value != null;
-            }
-        }
-
-        private TreeModel _selectedNode;
-
-        public TreeModel SelectedNode
-        {
-            get => _selectedNode;
-            set
-            {
-                SetProperty(ref _selectedNode, value);
             }
         }
 
@@ -115,15 +104,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         public IRelayCommand SynchronizeProjectsCommand { get; }
         public IRelayCommand SynchronizeIssuesCommand { get; }
         public IAsyncRelayCommand LoadProjectsAsyncCommand { get; }
-        public IAsyncRelayCommand LoadIssuesForProjectAsyncCommand { get; }
+        public IRelayCommand LoadIssuesForProjectCommand { get; }
         public IRelayCommand OpenSettingsDialogCommand { get; }
         public IRelayCommand OpenDailyRaportDialogCommand { get; }
-        public IRelayCommand AddIssueForProjectCommand { get; }
         public IRelayCommand OpenSearchWindowCommand { get; }
         public IRelayCommand OpenCreateBackupDialogCommand { get; }
         public IRelayCommand OpenRestoreBackupDialogCommand { get; }
-        public IAsyncRelayCommand DeleteIssueFromProjectCommand { get; }
-        public IAsyncRelayCommand<TreeModel> SynchronizeNodeCommand { get; }
         public IRelayCommand<ITrayable> ShowMainWindowCommand { get; }
         #endregion
 
@@ -141,37 +127,32 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
 
             SynchronizeProjectsCommand = new RelayCommand(ShowSynchronizeProjectDialog);
             SynchronizeIssuesCommand = new RelayCommand(SynchronizeIssuesDialog);
-            LoadProjectsAsyncCommand = new AsyncRelayCommand(LoadProjects);
-            LoadIssuesForProjectAsyncCommand = new AsyncRelayCommand(LoadIssuesForProject);
+            LoadProjectsAsyncCommand = new AsyncRelayCommand(LoadProjectsAsync);
             OpenSettingsDialogCommand = new RelayCommand(OpenSettingsDialog);
             OpenDailyRaportDialogCommand = new RelayCommand(OpenDailyRaportDialog);
-            AddIssueForProjectCommand = new RelayCommand(OpenAddIsuueToProjectDialog);
             OpenSearchWindowCommand = new RelayCommand(OpenSearchWindow);
             OpenCreateBackupDialogCommand = new RelayCommand(OpenCreateBackupDialog);
             OpenRestoreBackupDialogCommand = new RelayCommand(OpenRestoreBackupDialog);
-            DeleteIssueFromProjectCommand = new AsyncRelayCommand(DeleteIsuueFromProject);
             ShowMainWindowCommand = new RelayCommand<ITrayable>(ShowFromTray);
-            SynchronizeNodeCommand = new AsyncRelayCommand<TreeModel>(SynchronizeNode);
-
-            WeakReferenceMessenger.Default.Register<ChangeSelectedIssueDoneStatus>(this, (r, m) =>
-            {
-                ChangeSelectedAsDone(m.Value);
-            });
-
-            WeakReferenceMessenger.Default.Register<ChangeSelectedCommentDoneStatus>(this, (r, m) =>
-            {
-                ChangeSelectedAsDone(m.Value);
-            });
-
-            WeakReferenceMessenger.Default.Register<AddIssueToProjectMessage>(this, (r, m) =>
-            {
-                AddToTreeView(m.Value);
-            });
 
             WeakReferenceMessenger.Default.Register<NodeChangeMessage>(this, (r, m) =>
             {
                 SetVisibility(m.Value);
             });
+
+            SystemEvents.SessionSwitch += new SessionSwitchEventHandler(SystemEvents_SessionSwitch);
+        }
+
+        private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            if (e.Reason == SessionSwitchReason.SessionLock)
+            {
+                _logger.LogDebug("Block PC");
+            }
+            else if (e.Reason == SessionSwitchReason.SessionUnlock)
+            {
+                _logger.LogDebug("Unlock PC");
+            }
         }
 
         private void SetVisibility(TreeModel value)
@@ -189,7 +170,6 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
                     ViewTimeIntervalList = true;
                     break;
             }
-            SelectedNode = value;
         }
 
         private void OpenCreateBackupDialog()
@@ -209,22 +189,8 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             window?.OpenFromTray();
         }
 
-        private void AddToTreeView(Data.Models.Issue value)
-        {
-            if (value == null) return;
-            var issue = _mapper.Map<Models.Tree.TreeModel>(value);
-            Issues.Add(issue);
-        }
 
-        private void ChangeSelectedAsDone(TreeModel value)
-        {
-            if (SelectedNode.Id == value.Id && SelectedNode.Type == value.Type)
-            {
-                SelectedNode.Done = value.Done;
-            }
-        }
-
-        private async Task LoadProjects()
+        private async Task LoadProjectsAsync()
         {
             try
             {
@@ -237,11 +203,11 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError("{0} {1}", nameof(LoadProjects), ex.Message);
+                _logger.LogError("{0} {1}", nameof(LoadProjectsAsync), ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} {1}", nameof(LoadProjects), ex.Message);
+                _logger.LogError("{0} {1}", nameof(LoadProjectsAsync), ex.Message);
                 _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu projektów");
             }
         }
@@ -258,25 +224,9 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             dialog.ShowAsync();
         }
 
-        private async Task LoadIssuesForProject()
+        private void LoadIssuesForProjectAsync()
         {
-            try
-            {
-                if (SelectedProject != null && SelectedProject.Id > 0)
-                {
-                    Issues.Clear();
-                    var result = await _issueService.GetIssuesByProjectIdAsync(SelectedProject.Id);
-                    foreach (var item in _mapper.Map<IEnumerable<Models.Tree.TreeModel>>(result))
-                    {
-                        Issues.Add(item);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("{0} {1}", nameof(LoadIssuesForProject), ex.Message);
-                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Wystąpił problem przy pobieraniu listy zadań");
-            }
+            WeakReferenceMessenger.Default.Send<ProjectChangeMessage>(new ProjectChangeMessage(SelectedProject));
         }
 
         private void OpenSettingsDialog()
@@ -297,157 +247,12 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             {
                 var dialog = new SearchWindow();
                 dialog.Show();
-                WeakReferenceMessenger.Default.Send(new SelectedProjectMessage(SelectedProject));
+                WeakReferenceMessenger.Default.Send(new SetSelectedProjectMessage(SelectedProject));
             }
             else
             {
                 _messageBoxHelper.ShowWarningInfoBox("Najpierw należy wybrać projekt w którym nastąpi wyszukiwanie", "Brak wybranego projektu");
             }
-        }
-
-        private void OpenAddIsuueToProjectDialog()
-        {
-            if (SelectedProject != null)
-            {
-                var dialog = new AddIssueToProject();
-                dialog.ShowAsync();
-                WeakReferenceMessenger.Default.Send(new SelectedProjectMessage(SelectedProject));
-            }
-            else
-            {
-                _messageBoxHelper.ShowWarningInfoBox("By dodać zadanie pierwsze wybierz projekt", "Brak wybranego projektu");
-            }
-        }
-
-        private async Task DeleteIsuueFromProject()
-        {
-            try
-            {
-                if (SelectedNode != null && SelectedNode.Type == nameof(ObjectType.Issue))
-                {
-                    var result = _messageBoxHelper.ShowConfirmationBox("Czy na pewno chcesz usunąć zaznaczone zadanie?", "Uwaga");
-                    if (result)
-                    {
-                        var timeIntervalsForSelectedIssue = await _timeIntervalsService.GetTimeIntervalsForIssueAsync(SelectedNode.Id);
-                        foreach (var timeInterval in timeIntervalsForSelectedIssue)
-                        {
-                            await _timeIntervalsService.DeleteAsync(timeInterval);
-                        }
-
-                        var issue = await _issueService.GetIssueAsync(SelectedNode.Id);
-                        if (issue != null)
-                        {
-                            await _issueService.Delete(issue);
-                        }
-
-                        var nodeToSearch = SelectedNode;
-                        SelectedNode = null;
-
-                        var isDeleted = DeleteNodeFromTree(nodeToSearch, Issues);
-                        if (isDeleted)
-                        {
-                            _messageBoxHelper.ShowInformationBox("Pomyślnie usunięto zadanie", "Usuwanie zakończone powodzeniem");
-                        }
-                    }
-                }
-                else
-                {
-                    _messageBoxHelper.ShowWarningInfoBox("Nie wybrano zadania do usunięcia", "Brak wybranego projektu");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("{0} {1}", nameof(DeleteIsuueFromProject), ex.Message);
-                _messageBoxHelper.ShowWarningInfoBox(ex.Message, "Brak wybranego projektu");
-            }
-        }
-
-        private bool DeleteNodeFromTree(TreeModel item, ObservableCollection<TreeModel> treeStructure)
-        {
-            if (treeStructure.Any(x => x.Id == item.Id && x.Type == item.Type))
-            {
-                return treeStructure.Remove(item);
-            }
-            else
-            {
-                foreach (var node in treeStructure)
-                {
-                    var result = DeleteNodeFromTree(item, node.Children);
-
-                    if (result)
-                    {
-                        return result;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private async Task SynchronizeNode(TreeModel node)
-        {
-            switch (node.Type)
-            {
-                case nameof(ObjectType.Comment):
-                    await SynchronizeComment(node.Id);
-                    break;
-                case nameof(ObjectType.Issue):
-                    await SynchronizeIssue(node.Id);
-                    break;
-            }
-
-            if (SelectedNode?.Id == node.Id && SelectedNode?.Type == node.Type)
-            {
-                WeakReferenceMessenger.Default.Send(new NodeChangeMessage(node));
-            }
-        }
-
-        private async Task SynchronizeIssue(int issueId)
-        {
-            try
-            {
-                var issue = await _issueService.GetIssueAsync(issueId);
-
-                if (issue == null)
-                {
-                    _messageBoxHelper.ShowWarningInfoBox("Nie znaleziono zadania w bazie", "Błąd");
-                    return;
-                }
-
-                var redmineIssue = await _integrationIssueService.GetIssue(issue.SourceId);
-                if (redmineIssue == null)
-                {
-                    _messageBoxHelper.ShowWarningInfoBox("Nie znaleziono zadania w Redmine", "Błąd");
-                    return;
-                }
-
-                redmineIssue.Comments = await _integrationJournalService.GetIssueJournals(redmineIssue);
-
-                await _issueService.SynchronizeIssues(redmineIssue);
-
-                await LoadIssuesForProject();
-
-                _messageBoxHelper.ShowInformationBox("Pomyślnie zsynchronizowano", "Sukces");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("{0} {1}", nameof(SynchronizeIssue), ex.Message);
-                _messageBoxHelper.ShowWarningInfoBox(String.Format("Nie udało się zsynchronizować zadania. {0}", ex.Message), "Błąd");
-            }
-        }
-
-        private async Task SynchronizeComment(int commentId)
-        {
-
-            var comment = await _commentService.GetCommentAsync(commentId);
-
-            if (comment == null)
-            {
-                _messageBoxHelper.ShowWarningInfoBox("Nie znaleziono komentarza w bazie", "Błąd");
-                return;
-            }
-
-            await SynchronizeIssue(comment.IssueId);
         }
     }
 }

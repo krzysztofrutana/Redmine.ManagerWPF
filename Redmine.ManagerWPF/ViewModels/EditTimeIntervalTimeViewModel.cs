@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Abstraction.Interfaces;
 using Redmine.ManagerWPF.Desktop.Extensions;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.TimeIntervalList;
 using Redmine.ManagerWPF.Desktop.Models.TimeIntervals;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;

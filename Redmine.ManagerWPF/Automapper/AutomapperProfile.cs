@@ -1,10 +1,5 @@
 ﻿using AutoMapper;
 using Redmine.ManagerWPF.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Redmine.ManagerWPF.Desktop.Automapper
 {
@@ -54,7 +49,7 @@ namespace Redmine.ManagerWPF.Desktop.Automapper
                 .ReverseMap()
                 .ForMember(x => x.MainTask, m => m.Ignore())
                 .ForMember(x => x.TimesForIssue, m => m.Ignore())
-                .ForMember(x => x.SourceId, m => m.MapFrom(s => -1))
+                .ForMember(x => x.SourceId, m => m.MapFrom(s => 0))
                 .ForMember(x => x.Comments, m => m.Ignore())
                 .ForMember(x => x.Issues, m => m.Ignore())
                 .ForMember(x => x.Project, m => m.Ignore());

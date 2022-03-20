@@ -36,6 +36,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -50,15 +52,26 @@
                 Margin="5,0,10,0"
                 Text="{Binding IssueFormModel.Name, Mode=TwoWay}" />
             <TextBlock
-                Grid.Row="0"
-                Grid.Column="1"
+                Grid.Row="2"
+                Grid.Column="0"
                 Margin="5,10,10,0"
                 Text="Status:" />
             <TextBox
-                Grid.Row="1"
-                Grid.Column="1"
+                Grid.Row="3"
+                Grid.Column="0"
                 Margin="5,0,10,0"
                 Text="{Binding IssueFormModel.Status, Mode=TwoWay}" />
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="1"
+                Margin="5,10,10,0"
+                Text="Numer:" />
+            <TextBox
+                Grid.Row="3"
+                Grid.Column="1"
+                Margin="5,0,10,0"
+                IsReadOnly="True"
+                Text="{Binding IssueFormModel.SourceId}" />
         </Grid>
 
         <TextBlock

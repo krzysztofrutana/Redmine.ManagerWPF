@@ -8,7 +8,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Desktop.Extensions;
 using Redmine.ManagerWPF.Desktop.Helpers;
-using Redmine.ManagerWPF.Desktop.Messages;
+using Redmine.ManagerWPF.Desktop.Messages.ProjectCombobox;
+using Redmine.ManagerWPF.Desktop.Messages.SearchWindow;
 using Redmine.ManagerWPF.Desktop.Models.Projects;
 using Redmine.ManagerWPF.Desktop.Services;
 using Redmine.ManagerWPF.Helpers.Interfaces;
@@ -98,7 +99,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<SearchWindowViewModel>();
 
-            WeakReferenceMessenger.Default.Register<SelectedProjectMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<SetSelectedProjectMessage>(this, (r, m) =>
             {
                 if (m.Value != null)
                 {

@@ -226,7 +226,7 @@ namespace Redmine.ManagerWPF.Desktop.Services
 
             var query = @$"SELECT * FROM [dbo].[Issues] issues 
                           LEFT JOIN [dbo].[Comments] comments ON comments.[IssueId] = issues.[Id] AND comments.[Text] LIKE '%{searchPhrase}%'
-                          WHERE [ProjectId] = @projectId AND ([Name] LIKE '%{searchPhrase}%' OR [Description] LIKE '%{searchPhrase}%' OR comments.[Text] LIKE '%{searchPhrase}%')";
+                          WHERE [ProjectId] = @projectId AND (STR(issues.[SourceId]) LIKE '{searchPhrase}' OR issues.[Name] LIKE '%{searchPhrase}%' OR issues.[Description] LIKE '%{searchPhrase}%' OR comments.[Text] LIKE '%{searchPhrase}%')";
 
             var issues = await context.QueryAsync<Issue, Comment, Issue>(query, (issue, comment) =>
                 {

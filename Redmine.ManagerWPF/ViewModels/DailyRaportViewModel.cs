@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Redmine.ManagerWPF.Data.Models;
 using Redmine.ManagerWPF.Desktop.Extensions;
@@ -48,13 +49,44 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
         private readonly ILogger<DailyRaportViewModel> _logger;
         #endregion
 
+        #region Commands
+        public IRelayCommand<object> CopyNoteToClipboardCommand { get; }
+        public IRelayCommand<object> CopyTimeToClipboardCommand { get; }
+        #endregion
+
         public DailyRaportViewModel()
         {
             _timeIntervalsService = Ioc.Default.GetRequiredService<TimeIntervalsService>();
             _messageBoxHelper = Ioc.Default.GetRequiredService<IMessageBoxHelper>();
             _logger = Ioc.Default.GetLoggerForType<DailyRaportViewModel>();
 
+            CopyNoteToClipboardCommand = new RelayCommand<object>(CopyNoteToClipboard);
+            CopyTimeToClipboardCommand = new RelayCommand<object>(CopyTimeToClipboard);
+
             Date = DateTime.Now.Date;
+        }
+
+        private void CopyNoteToClipboard(object node)
+        {
+            if (node is TimeIntervalListItemModel timeInterval)
+            {
+                Clipboard.SetText(timeInterval.Note);
+            }
+        }
+
+        private void CopyTimeToClipboard(object node)
+        {
+            if (node is ListItemModel listItemModel)
+            {
+                var totalTime = listItemModel.TotalTimeTimeSpan;
+                Clipboard.SetText(Math.Round(totalTime.TotalHours, 2).ToString());
+            }
+
+            if (node is TimeIntervalListItemModel timeInterval)
+            {
+                var totalTime = timeInterval.EndDate - timeInterval.StartDate;
+                Clipboard.SetText(Math.Round(totalTime.TotalHours, 2).ToString());
+            }
         }
 
         private async void LoadRaportData()
@@ -62,7 +94,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             DataLoading = true;
             try
             {
-                var raportData = await GetRaportData();
+                var raportData = await GetRaportDataAsync();
                 RaportData.Clear();
 
                 Application.Current.Dispatcher.Invoke(() => SetRaportData(raportData));
@@ -92,7 +124,7 @@ namespace Redmine.ManagerWPF.Desktop.ViewModels
             }
         }
 
-        private async Task<List<ProjectListItemModel>> GetRaportData()
+        private async Task<List<ProjectListItemModel>> GetRaportDataAsync()
         {
             var result = new List<ProjectListItemModel>();
 
